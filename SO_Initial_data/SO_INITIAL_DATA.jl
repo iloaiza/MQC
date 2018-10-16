@@ -29,16 +29,3 @@ potential(R)=SO_pot(pot,R);
 h5write(file,"R0",R0)
 h5write(file,"p0",p0)
 h5write(file,"C0",C0)
-########### Text output
-println("The timestep is")
-@show δt
-println("The mass is")
-@show mass
-println("The final time, in a.u. is")
-@show tf
-println("The number of grid points is")
-@show 2^pow
-println("The name of the file for the savename is")
-@show file
-println("The boxsize is")
-@show boxsize

@@ -1,3 +1,45 @@
+function pot_1layer(R,β=0.03,N=4,M=2000,Ω=0.0028,D=5,γ=0.02,δ=0.01)
+    V=δ*ones(2N+1,2N+1)
+    dV=zeros(size(V))
+
+    icount=0
+    for i in -N:N
+        icount+=1
+        V[icount,icount]=M*Ω^2*(R+i*D)^2/2
+        dV[icount,icount]=M*Ω^2*(R+i*D)
+    end
+
+    for i in 1:2N
+        V[i,i+1]=β
+        V[i+1,i]=β
+    end
+
+    for i in 1:2N-1
+        V[i,i+2]=γ
+        V[i+2,i]=γ
+    end
+
+    return V,[dV]
+end
+
+
+function pot_sinus(R,w,h,c)#width, height and coupling
+    H=zeros(2,2)
+    dH=zeros(2,2)
+
+    H[1,1]=h*sin(w*R)
+    H[2,2]=-h*sin(w*R)
+    H[1,2]=c
+    H[2,1]=c
+
+    dH[1,1]=h*w*cos(w*R)
+    dH[2,2]=-h*w*cos(w*R)
+    dH[1,2]=0
+    dH[2,1]=0
+
+    return H,[dH]
+end
+
 const Omega_layered=0.004/sqrt(2)
 const thickness_layered=9
 
@@ -80,4 +122,34 @@ end
 
 function pot_layered(R,beta=0.03,gamma=0.02,delta=0.01)
     return Vtot(R,beta,gamma,delta),[dVtot(R)]
+end
+
+
+function pot_2D_sinus(R,c,l=10,d=1e-4,h=0.02,w=0.5,RL=[1e-2,1e-2])#w=width, h=height, c=normal coupling, d=intra_layer coupling, l=layers, RL=layer-layer dist
+    H=zeros(2*l,2*l)
+    dHx=zeros(2*l,2*l)
+    dHy=zeros(2*l,2*l)
+
+    for layer in 1:l
+        R_layer=R-(layer-1)*RL
+        H[layer,layer]=h*sin(w*R_layer[1])*sin(w*R_layer[2])
+        H[l+layer,l+layer]=-h*sin(w*R_layer[1])*sin(w*R_layer[2])
+        H[layer,l+layer]=c
+        H[l+layer,layer]=c
+
+        dHx[layer,layer]=h*w*cos(w*R_layer[1])*sin(w*R_layer[2])
+        dHy[layer,layer]=h*w*cos(w*R_layer[2])*sin(w*R_layer[1])
+        dHx[layer+l,layer+l]=-h*w*cos(w*R_layer[1])*sin(w*R_layer[2])
+        dHy[layer+l,layer+l]=-h*w*cos(w*R_layer[2])*sin(w*R_layer[1])
+
+        if layer<l
+            H[layer,layer+1]=d
+            H[layer+1,layer]=d
+            H[l+layer,l+layer+1]=d
+            H[l+layer+1,l+layer]=d
+        end
+    end
+
+
+    return H,[dHx,dHy]
 end

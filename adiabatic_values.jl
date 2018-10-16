@@ -1,16 +1,16 @@
 function adiabatic_values(R,NDOFs=length(R))
     Hd,dHd=potential(R) #dHd must be an array with NDOFs nsts*nsts arrays
-    E,Ua=eig(Hd)
+    E,Ua=eigen(Hd)
     ind=sortperm(E)
     sort!(E)
     Ua=Ua[:,ind]
-    W=diagm(E)*ones(nsts,nsts)-ones(nsts,nsts)*diagm(E)
+    W=Diagonal(E)*ones(nsts,nsts)-ones(nsts,nsts)*Diagonal(E)
     F=[zeros(nsts,nsts) for k in 1:NDOFs]
     Γ=[zeros(nsts,nsts) for k in 1:NDOFs]
     for k in 1:NDOFs
         F[k]=Ua'*dHd[k]*Ua
-        Γ[k]=-F[k]./(W+eye(nsts))
-        Γ[k]=Γ[k]-diagm(diag(Γ[k]))
+        Γ[k]=-F[k]./(W+Diagonal(ones(nsts)))
+        Γ[k]=Γ[k]-Diagonal(Γ[k])
     end
 
     return E,Γ,F,W,Ua,dHd
@@ -25,10 +25,24 @@ end
 function CM2_additional_values(p,Γ,W,NDOFs)
     NACs=sum(p/mass.*Γ)
     tvec=-NACs[2:end,1]
+
+    #=          For sign changing z, comment for always positive z
+    tabs=abs.(tvec)
+    tmax=tabs[1]
+    imax=1
+    for i in 1:length(tvec)
+        if tabs[i]>tmax
+            tmax=tabs[i]
+            imax=i
+        end
+    end
+    zsign=sign(tvec[imax])
+    #       =#
+    #zsign=sign(sum(tvec))
     #tvec=[Γ[i][2:end,1] for i in 1:NDOFs]
-    z=norm(tvec)
+    z=norm(tvec)#*zsign
     if z==0
-        tnorm=zeros(tvec)
+        tnorm=zeros(size(tvec))
     else
         tnorm=tvec./z
     end
@@ -39,7 +53,7 @@ end
 
 function CM3_additional_values(wvec,tnorm,z,NDOFs)
     if z==0
-        kvec=zeros(tnorm)
+        kvec=zeros(size(tnorm))
         K=1
     else
         kvec=tnorm./tnorm[1]
@@ -48,12 +62,27 @@ function CM3_additional_values(wvec,tnorm,z,NDOFs)
     w_2=wvec[2:end]
     k_2=kvec[2:end]
 
-    wvec2=w_2-k_2.^2/K^2.*(w_2-wvec[1])
-    tvec2=k_2.*(w_2-wvec[1])./K^2
-    zbar=norm(tvec2)
+    wvec2=w_2.-(k_2.^2/K^2).*(w_2.-wvec[1])
+    tvec2=k_2.*(w_2.-wvec[1])./K^2
+
+    #=          For sign changing zbar, comment for always positive zbar
+    tabs=abs.(tvec2)
+    tmax=tabs[1]
+    imax=1
+    for i in 1:length(tvec2)
+        if tabs[i]>tmax
+            tmax=tabs[i]
+            imax=i
+        end
+    end
+    zbarsign=sign(tvec2[imax])
+    #        =#
+    #zbarsign=sign(sum(tvec2))
+
+    zbar=norm(tvec2)#*zbarsign
 
     if zbar==0
-        tnorm2=zeros(tvec2)
+        tnorm2=zeros(size(tvec2))
     else
         tnorm2=tvec2./zbar
     end

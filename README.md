@@ -7,10 +7,10 @@ A Julia implementation of some MQC methods for molecular dynamics.
 Includes Ehrenfest, Tully's Fewest Switches Surface Hopping (FSSH) (in both adiabatic and diabatic representations), Collective Modes (with and without surface hopping) and Split Operator (SO) exact dynamics for debugging.
 
 
-Currently supports parallelization in 1 node. 
+Currently supports parallelization in 1 node.
 
 
-	-DYNAMICS.jl is used for a single set of initial conditions under the MQC methods.
+	-DYNAMICS.jl is used for a single set of initial conditions under the MQC methods. (Still, an initial wigner distribution can be used)
 
 	-SPLIT_OPERATOR.jl is used for the SO propagation.
 
@@ -20,5 +20,3 @@ Currently supports parallelization in 1 node.
 
 
 Check the folders Initial_conditions and SO_Initial_conditions for the initial conditions files. For the implementation of a new potential, it's easier to add it to the potential.jl file (or make a new .jl file, just remember to add it in the include.jl file!).
-
-

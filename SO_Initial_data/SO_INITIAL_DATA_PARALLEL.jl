@@ -7,9 +7,9 @@ using HDF5 #package used for saving data
 @everywhere const δt=0.1
 flags=100
 
-@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/Complete_code/general_functions.jl")
-@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/Complete_code/potentials.jl")
-@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/Complete_code/split_operator_functions_parallel.jl")
+@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/MQC/general_functions.jl")
+@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/MQC/potentials.jl")
+@everywhere include("/gpfs/fs0/scratch/i/izmaylov/nacho/MQC/split_operator_functions_parallel.jl")
 
 ######### Define potential and initial conditions
 R0=-24
@@ -31,16 +31,3 @@ file="./data/SO_"*potname*"_R0($R0)_p0($p0).h5"
 h5write(file,"R0",R0)
 h5write(file,"p0",p0)
 h5write(file,"C0",C0)
-########### Text output
-println("The timestep is")
-@show δt
-println("The mass is")
-@show mass
-println("The final time, in a.u. is")
-@show tf
-println("The number of grid points is")
-@show 2^pow
-println("The name of the file for the savename is")
-@show file
-println("The boxsize is")
-@show boxsize

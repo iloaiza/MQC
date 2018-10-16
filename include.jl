@@ -1,4 +1,8 @@
 #include module, very practical
+using SharedArrays
+using LinearAlgebra
+using HDF5
+using Distributions
 
 include("general_functions.jl")
 include("potentials.jl")
@@ -12,3 +16,4 @@ include("hop.jl")
 include("integration.jl")
 include("plotting.jl")
 include("energy_checker.jl")
+include("data_functions.jl")

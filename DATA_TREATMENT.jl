@@ -4,21 +4,22 @@ using Plots
 plotlyjs()
 
 ############################# INPUT STUFF
-input_name="NaCl"
+input_name="24layered_015"
 
 #filename=""
 ############################# LOAD SAVE FILES
 include("Initial_data/"*input_name*".jl")
-file="Complete_code/data/"*potname*"_R0($R0)_p0($p0).h5"
-#file="Complete_code/data/"*filename*".h5"
-SOfile="Complete_code/data/SO_"*potname*"_R0($R0)_p0(100).h5"
-SOfile="/home/nacho/Desktop/HEAVY_DATA/SO_"*potname*"_R0($R0)_p0($p0).h5"
-include("SO_Initial_data/NaCl.jl")
+file="MQC/data/"*potname*"_R0($R0)_p0($p0).h5"
+#file="MQC/data/"*filename*".h5"
+SOfile="MQC/data/SO_"*potname*"_R0($R0)_p0($p0).h5"
+SOfile="/home/nacho/Desktop/Desktop/HEAVY_DATA/SO_"*potname*"_R0($R0)_p0($p0).h5"
+
 ############################# HISTOGRAM STUFF
 HISTO_RES=150;
 xmin=-30;
 xmax=32;
 ###SO
+
 include("split_operator_functions_parallel.jl")
 T_SO,X_SO,P_SO,PSI_AD_SO,PX_SO=SO_read(SOfile);           #LOAD SPLIT OPERATOR
 Y,PX0=SO_histo_builder(X_SO,PX_SO[1],HISTO_RES,xmin,xmax);
@@ -61,7 +62,7 @@ HR_cm3=HR_cm3./maximum(HR_cm3[:,1])
 HR_cm2_f=HR_cm2_f./maximum(HR_cm2_f[:,1])
 HR_cm3_f=HR_cm3_f./maximum(HR_cm3_f[:,1])
 HR_cm2_f_v=HR_cm2_f_v./maximum(HR_cm2_f_v[:,1])
-HR_cm3_f_v=HR_cm3_f_v./maximum(HR_cm3_f_v[:,1])
+HR_cm3_f_v=HR_cm3_f_v./maximum(HR_cm3_f_v[:,1]);
 
 
 ############### HISTOGRAM PLOTTING
@@ -70,7 +71,7 @@ TICKFONT=font(24,"Helvetica");
 P=plot(Y,PX0,line=(2.0,:dash),color=:grey);
 plot!(Y,PXf,line=(2.5,:dot),color=:black);
 #P=plot(R_eh[:,1],HR_eh[:,1],label="EH_i",line=(1,:dash),color=:black);
-plot!(R_eh[:,end],HR_eh[:,end],label="EH_f",line=(2,:solid),color=:blue);
+plot!(R_eh[:,end],-HR_eh[:,end],label="EH_f",line=(2,:solid),color=:blue);
 plot!(R_fssh[:,end],HR_fssh[:,end],label="FSSH_f",line=(2.5,:solid),color=:red);
 #plot!(R_fssh_d[:,end],HR_fssh_d[:,end],label="FSSH_d_f",line=(1.5,:solid),color=:green);
 plot!(R_cm2[:,end],HR_cm2[:,end],label="CM2",line=(2,:solid))
@@ -80,15 +81,14 @@ plot!(R_cm3_v[:,end],HR_cm3_v[:,end],label="CM3_V",line=(2,:solid))
 plot!(R_cm2_f[:,end],HR_cm2_f[:,end],label="CM2_F",line=(2,:solid))
 plot!(R_cm3_f[:,end],HR_cm3_f[:,end],label="CM3_F",line=(2,:solid))
 plot!(R_cm2_f_v[:,end],HR_cm2_f_v[:,end],label="CM2_F_V",line=(2,:solid))
-plot!(R_cm3_f_v[:,end],HR_cm3_f_v[:,end],label="CM3_F_V",line=(2,:solid))
+plot!(R_cm3_f_v[:,end],-HR_cm3_f_v[:,end],label="CM3_F_V",line=(2,:solid))
 plot!(xlabel="Position (a.u.)",ylabel="Nuclear distribution",xlims=(xmin,xmax));
 plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT);
-#plot!(legend=false);
+plot!(legend=false);
 display(P)
-#ylims!(-0.2,0.3)
+ylims!(-0.25,0.25)
 #plot!(legend=true)
 
-println("nacho!")
 
 using Interact
 @manipulate for i in 1:101
@@ -109,9 +109,9 @@ using Interact
     display(P)
 end
 ################################ ENERGY STUFF
-xmin=0.2;
-xmax=30;
-res=100;
+xmin=-24;
+xmax=24;
+res=1000;
 for x in linspace(xmin,xmax,100)
     #@show x
     H,dH=pot_NaCl(x)
@@ -141,7 +141,7 @@ plot!(xlabel="Position (a.u.)",ylabel="Energy (a.u.)",xlims=(xmin,xmax));
 plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT);
 plot!(legend=false);
 title!("NAC/$NACfact",titlefont = GUIDEFONT)
-ylims!(-0.029,0.029)
+ylims!(-0.011,0.1)
 display(P)
 #yaxis!()
 
@@ -205,7 +205,7 @@ end
 ############## SINGLE TRAJECTORIES
 input_name="1layer_01056"
 include("Initial_data/"*input_name*".jl")
-file="Complete_code/data/SINGLE_"*potname*"_R0($R0)_p0($p0).h5"
+file="MQC/data/SINGLE_"*potname*"_R0($R0)_p0($p0).h5"
 T_eh,R_eh,p_eh,C_eh=EH_read(file)
 T_cm2,R_cm2,p_cm2,D_cm2=CM2_read(file)
 T_cm3,R_cm3,p_cm3,D_cm3=CM3_read(file)
@@ -213,13 +213,14 @@ T_cm2_fssh,R_cm2_fssh,p_cm2_fssh,
 
 
 
-############## ENERGY_SIMULATIONS
+############## K_ENERGY_SIMULATIONS
 input_name="simple"
 #filename=""
-############################# LOAD SAVE FILES
+##
 include("Initial_data/"*input_name*".jl")
 
-file="Complete_code/data/K_"*potname*"_R0($R0).h5"
+dirname="MQC/data/K_"*potname*"_R0($R0)"
+file=dirname*"/K_SIMULATION.h5"
 
 A_EH=general_K_read(file,"EH",3)
 FR_EH=A_EH[1]
@@ -233,41 +234,28 @@ Fpop_FSSH=A_FSSH[3]
 Fast_FSSH=A_FSSH[4]
 
 
-GS_TRANS_FSSH=zeros(K)
-GS_REFL_FSSH=zeros(K)
-ET_TRANS_FSSH=zeros(K)
-
-for k in 1:length(K)
-    for i in 1:Ntrajs
-        if FR_FSSH[k,i]>0 && Fast_FSSH[k,i]==2
-            ET_TRANS_FSSH[k]+=1
-        elseif FR_FSSH[k,i]>0 && Fast_FSSH[k,i]==1
-            GS_TRANS_FSSH[k]+=1
-        else
-            GS_REFL_FSSH[k]+=1
-        end
-    end
-end
+histogram(FR_FSSH[7,:])
+GS_FSSH=GS_MF_prob(K,Fpop_FSSH)
+GS_FSSH=GS_SH_prob(K,Fast_FSSH)
+GS_EH=GS_MF_prob(K,Fpop_EH)
 
 
-
-GS_TRANS_FSSH=GS_TRANS_FSSH/Ntrajs
-GS_REFL_FSSH=GS_REFL_FSSH/Ntrajs
-ET_TRANS_FSSH=ET_TRANS_FSSH/Ntrajs
+GS_TRANS_FSSH,GS_REFL_FSSH,ET_TRANS_FSSH=refl_trans_SH(K,FR_FSSH,Fast_FSSH,2)
 plot(K,ET_TRANS_FSSH)
-plot!(K,GS_PROB_FSSH)
+plot!(K,GS_REFL_FSSH)
+plot!(K,GS_TRANS_FSSH)
 
-histogram(FR_FSSH[5,:])
+plot(K,GS_FSSH)
+plot!(K,GS_EH)
+ylims!(0.999,1.001)
 
-
-
-################## CHANGE SAVE FILESinput_name="24layered_03"
+################## CHANGE SAVE FILES
 using HDF5
 input_name="24layered_015"
 include("Initial_data/"*input_name*".jl")
-newfile="Complete_code/data/"*potname*"_R0($R0)_p0($p0).h5"
+newfile="MQC/data/"*potname*"_R0($R0)_p0($p0).h5"
 NEWNAME="layered_015_24"
-file="Complete_code/data/"*NEWNAME*".h5"
+file="MQC/data/"*NEWNAME*".h5"
 E0=h5read(file,"E0");                                     #LOAD INITIAL ENERGY
 T_EH,R_EH,P_EH,C_EH=EH_read(file);                        #LOAD EHRENFEST
 T_FSSH,R_FSSH,P_FSSH,C_FSSH,AST_FSSH=FSSH_read(file);     #LOAD SURFACE HOPPING

@@ -7,7 +7,7 @@ function energies_4_plot(Rmin,Rmax,res,ex=nsts)
     #build NxNx...xN (N times) matrix with d dimensional vectors in each entry
 
     if NDOFs!=1
-        BASE=[linspace(Rmin[k],Rmax[k],res[k]) for k in 1:NDOFs]
+        BASE=[range(Rmin[k],stop=Rmax[k],length=res[k]) for k in 1:NDOFs]
         global R=NxN(BASE,ex)
         forstring=""
         endstring=""
@@ -30,7 +30,7 @@ function energies_4_plot(Rmin,Rmax,res,ex=nsts)
         end
         forstring=forstring*"][NDOFs+1:NDOFs+$ex].=E;   "
         forstring=forstring*endstring
-        eval(parse(forstring))
+        eval(Meta.parse(forstring))
     else
         R=zeros(Float64,res,1+ex)
         BASE=linspace(xmin,xmax,res)
@@ -44,14 +44,17 @@ function energies_4_plot(Rmin,Rmax,res,ex=nsts)
     return R
 end
 
-function all_4_1D_plot(Rmin,Rmax,res,basest=1,targetsts=2)
+function all_4_1D_plot(xmin,xmax,res,basest=1,targetsts=2)
     R=zeros(Float64,res,1+nsts+length(targetsts))
-    BASE=linspace(xmin,xmax,res)
+    BASE=range(xmin,stop=xmax,length=res)
     R[:,1].=BASE
+    C=zeros(nsts)
+    C[1]=1
+    S=EH_state(xmin,0,C)
     for i in 1:res
-        E,Γ,F,W,Ua,dHd=adiabatic_values(R[i,1],1)
-        R[i,2:nsts+1].=E
-        R[i,nsts+2:end].=Γ[1][basest,targetsts]
+        S=EH_state(R[i,1],0,C,S.el.Ua)
+        R[i,2:nsts+1].=S.el.E
+        R[i,nsts+2:end].=S.el.Γ[1][basest,targetsts]
     end
 
     return R
@@ -65,11 +68,24 @@ function couplings_4_plot(R,basest=1,targetst=2)
     S=EH_state(R[1],0,C)
 
     for (i,q) in enumerate(R)
-        S=EH_state(q,0,C,S.Ua)
+        S=EH_state(q,0,C,S.el.Ua)
         for (ntar,tst) in enumerate(targetst)
-            COUPLINGS[ntar][i]=S.Γ[1][basest,tst]
+            COUPLINGS[ntar][i]=S.el.Γ[1][basest,tst]
         end
     end
 
     return COUPLINGS
+end
+
+function diabatic_1D_plot(Rmin,Rmax,res,basest=1,targetsts=2)
+    R=zeros(Float64,res,1+nsts+length(targetsts))
+    BASE=range(xmin,stop=xmax,length=res)
+    R[:,1].=BASE
+    for i in 1:res
+        H,dH=diabatic_values(R[i,1])
+        R[i,2:nsts+1].=diag(H)
+        R[i,nsts+2:end].=H[basest,targetsts]
+    end
+
+    return R
 end

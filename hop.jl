@@ -1,10 +1,10 @@
 function hop!(S::FSSH_state)
   probs=zeros(nsts)
   ast=S.ast
-  akk=abs2(S.C[ast])
+  akk=abs2(S.el.C[ast])
   for i in 1:nsts
       if i != ast
-          prob=2*real(sum([abs(S.p[a])/mass*S.Γ[a][ast,i] for a in 1:S.NDOFs])*conj(S.C[ast])*S.C[i])*dt/akk
+          prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,i] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[i])*dt/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -14,21 +14,21 @@ function hop!(S::FSSH_state)
   ξ=rand()
   for i in 1:nsts
       if ξ<probs[i] #hop successful, pass to energy check
-          dij=[S.Γ[k][i,ast] for k in 1:S.NDOFs] #NAC vector where it will hop
-          if S.NDOFs==1
+          dij=[S.el.Γ[k][i,ast] for k in 1:S.cl.NDOFs] #NAC vector where it will hop
+          if S.cl.NDOFs==1
               Nij=1
           else
-              Nij=dij/abs(dij) #normalized NAC vector
+              Nij=abs.(dij)/norm(dij) #normalized NAC vector
           end
-          p_nac=S.p.*Nij #momentum alongside NAC direction
-          p_ad=S.p-p_nac #adiabatic momentum
-          ΔE=abs2(p_nac)/2/mass+S.E[ast]-S.E[i] #check energy alongside NAC direction
+          p_nac=S.cl.p.*Nij #momentum alongside NAC direction
+          p_ad=S.cl.p-p_nac #adiabatic momentum
+          ΔE=norm2(p_nac)/2/mass+S.el.E[ast]-S.el.E[i] #check energy alongside NAC direction
           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i") #for debugging
               p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
-              S.p=p_ad+p_nac_new
-              S.ast=i
+              pnew=p_ad+p_nac_new
+              S=FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
@@ -41,11 +41,11 @@ end
 
 function hop!(S::FSSH_dia_state)
   probs=zeros(nsts)
-  ast=S.dst
-  akk=abs2(S.C[ast])
+  ast=S.ast
+  akk=abs2(S.el.C[ast])
   for i in 1:nsts
       if i != ast
-          prob=2*imag(S.C[i]*conj(S.C[ast])*S.V[i,ast])*dt/akk
+          prob=2*imag(S.el.C[i]*conj(S.el.C[ast])*S.el.E[i,ast])*dt/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -56,11 +56,14 @@ function hop!(S::FSSH_dia_state)
   ξ=rand()
   for i in 1:nsts
       if ξ<probs[i] #hop successful, pass to energy check
-          ΔE=S.p^2/2/mass+S.V[ast,ast]-S.V[i,i]
+          if S.cl.NDOFs!=1
+              error("Haven't implemented multiple nuclear degrees of freedom for diabatic FSSH")
+          end
+          ΔE=S.p^2/2/mass+S.el.E[ast,ast]-S.el.E[i,i]
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i")
-              S.p=sign(S.p)*sqrt(2*mass*ΔE)
-              S.dst=i
+              pnew=sign(S.cl.p)*sqrt(2*mass*ΔE)
+              S=FSSH_dia_state_builder(S.cl.R,pnew,S.el.C,i,S.cl.NDOFs)
           end
           break
       end
@@ -72,31 +75,50 @@ end
 function hop!(S::CM2_FSSH_state)
   probs=zeros(2)
   ast=S.ast
-  akk=abs2(S.D[ast])
+  akk=abs2(S.el.C[ast])
 
   for i in 1:2
       if i != ast
-          prob=-2*real(S.Dmat[ast,i]*conj(S.D[ast])*S.D[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
           probs[i]=maximum([0,prob])
       end
   end
-  for i in 2:2
-      probs[i]+=probs[i-1]
-  end
+  probs[2]+=probs[1]
+
   ξ=rand()
   for i in 1:2
       if ξ<probs[i] #hop successful, pass to energy check
-          if S.NDOFs!=1
-              error("Still haven't implemented for many NDOFs")
+          if S.cl.NDOFs!=1
+              U=zeros(nsts,nsts)
+
+              U[1,1]=1
+              for i in 1:nsts-1
+                  U[2,i+1]=S.CM2.tnorm[i]
+                  U[i+1,2]=U[2,i+1]
+              end
+              for i in 3:nsts
+                  U[i,i]=-S.CM2.tnorm[1]
+              end
+              U=U./abs(S.CM2.z)
+
+              Udag=U'
+
+              dij=[(Udag*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
+              Nij=abs.(dij)/norm(dij)
+              p_nac=S.cl.p.*Nij
+          else
+              p_nac=S.cl.p
+              Nij=1
           end
-          E=[S.E[1],sum(S.E[2:end].*(S.tnorm.^2))]
-          ΔE=S.p^2/2/mass+E[ast]-E[i] #check energy alongside NAC direction
+          p_ad=S.cl.p-p_nac
+          E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
+          ΔE=norm2(p_nac)/2/mass+E[ast]-E[i] #check energy alongside NAC direction
           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i") #for debugging
-              p_new=sign(S.p)*sqrt(2*mass*ΔE)
-              S.p=p_new
-              S.ast=i
+              p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
+              pnew=p_nac_new+p_ad
+              S=CM2_FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
@@ -110,11 +132,11 @@ end
 function hop!(S::CM3_FSSH_state)
   probs=zeros(3)
   ast=S.ast
-  akk=abs2(S.D[ast])
+  akk=abs2(S.el.C[ast])
 
   for i in 1:3
       if i != ast
-          prob=-2*real(S.Dmat[ast,i]*conj(S.D[ast])*S.D[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -124,20 +146,55 @@ function hop!(S::CM3_FSSH_state)
   ξ=rand()
   for i in 1:3
       if ξ<probs[i] #hop successful, pass to energy check
-          if S.NDOFs!=1
-              error("Still haven't implemented for many NDOFs")
+          if S.cl.NDOFs!=1
+              U2=zeros(nsts,nsts)
+              U3=zeros(nsts,nsts)
+
+              U2[1,1]=1
+              for i in 1:nsts-1
+                  U2[2,i+1]=S.CM3.tnorm[i]
+                  U2[i+1,2]=U2[2,i+1]
+              end
+              for i in 3:nsts
+                  U2[i,i]=-S.CM3.tnorm[1]
+              end
+              U2=U2./abs(S.CM3.z)
+
+              U3[1,1]=abs(S.CM3.zbar)
+              U3[2,2]=1
+              for i in 1:nsts-2
+                  U3[3,i+2]=S.CM3.tnorm2[i]
+                  U3[i+2,3]=U3[3,i+2]
+              end
+              for i in 4:nsts
+                  U3[i,i]=-S.CM3.tnorm2[1]
+              end
+              U3=U3./abs(S.CM3.zbar)
+
+              U=U2*U3
+              Udag=U'
+
+              dij=[(Udag*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
+              Nij=abs.(dij)/norm(dij)
+              p_nac=S.cl.p.*Nij
+          else
+              p_nac=S.cl.p
+              Nij=1
           end
-          Ebar=[S.E[2]*S.tnorm[k-1]^2+S.E[k]*S.tnorm[1]^2 for k in 2:nsts]
-          E=[S.E[1],sum(S.E[2:end].*(S.tnorm.^2)),sum(Ebar[2:end].*(S.tnorm2.^2))]
-          ΔE=S.p^2/2/mass+E[ast]-E[i] #check energy alongside NAC direction
+          p_ad=S.cl.p-p_nac
+          Ebar=[S.el.E[2]*S.CM3.tnorm[k-1]^2+S.el.E[k]*S.CM3.tnorm[1]^2 for k in 2:nsts]
+          E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM3.tnorm.^2)),sum(Ebar[2:end].*(S.CM3.tnorm2.^2))]
+          ΔE=norm2(p_nac)/2/mass+E[ast]-E[i] #check energy alongside NAC direction
           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i") #for debugging
-              p_new=sign(S.p)*sqrt(2*mass*ΔE)
-              S.p=p_new
-              S.ast=i
+              p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
+              pnew=p_nac_new+p_ad
+              S=CM3_FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
+          #else
+            #  println("frustrated hop from $ast to $i")
           end
           break
       end
@@ -145,80 +202,62 @@ function hop!(S::CM3_FSSH_state)
 
 end
 
-function hop!(S::CM2_FSSH_VANILLA_state)
-  probs=zeros(2)
-  ast=S.ast
-  akk=abs2(S.D[ast])
-
-  for i in 1:2
-      if i != ast
-          prob=-2*real(S.Dmat[ast,i]*conj(S.D[ast])*S.D[i])*dt/akk
-          probs[i]=maximum([0,prob])
+function hop!(S::SHEEP_state)
+  num_tr_sts=length(SHEEP_REL)
+  probs=zeros(nsts)
+  ast_array=SHEEP_REL[S.ast]
+  rho_kk=sum(abs2.(S.el.C[ast_array]))
+  for tr_st in 1:num_tr_sts
+      for ast in ast_array
+          if tr_st != ast
+              prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,tr_st] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[tr_st])*dt/rho_kk
+              probs[tr_st]+=maximum([0,prob])
+          end
       end
   end
-  for i in 2:2
-      probs[i]+=probs[i-1]
+  for tr_st in 2:num_tr_sts
+      probs[tr_st]+=probs[tr_st-1]
   end
   ξ=rand()
-  for i in 1:2
-      if ξ<probs[i] #hop successful, pass to energy check
-          if S.NDOFs!=1
-              error("Still haven't implemented for many NDOFs")
+  for tr_st in 1:num_tr_sts
+      if ξ<probs[tr_st] #hop successful, pass to energy check
+          dij=zeros(S.cl.NDOFs)
+          for dof in 1:S.cl.NDOFs
+              dij[dof]=sum(S.el.Γ[dof][tr_st,S.ast])
           end
-          #E=[S.E[1],sum(S.E[2:end].*(S.tnorm.^2))]
-          E=[S.E[1],S.E[1]+S.w11]
-          ΔE=S.p^2/2/mass+E[ast]-E[i] #check energy alongside NAC direction
-           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
-          if ΔE>=0 #energy suficient
-              #println("hop from $ast to $i") #for debugging
-              p_new=sign(S.p)*sqrt(2*mass*ΔE)
-              S.p=p_new
-              S.ast=i
-              #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
-              #@show Eini-Efin #for debugging (1)
+          if S.cl.NDOFs==1
+              Nij=1
+          else
+              Nij=abs.(dij)/norm(dij) #normalized NAC vector
           end
-          break
-      end
-  end
-
-end
-
-
-function hop!(S::CM3_FSSH_VANILLA_state)
-  probs=zeros(3)
-  ast=S.ast
-  akk=abs2(S.D[ast])
-
-  for i in 1:3
-      if i != ast
-          prob=-2*real(S.Dmat[ast,i]*conj(S.D[ast])*S.D[i])*dt/akk
-          probs[i]=maximum([0,prob])
-      end
-  end
-  for i in 2:3
-      probs[i]+=probs[i-1]
-  end
-  ξ=rand()
-  for i in 1:3
-      if ξ<probs[i] #hop successful, pass to energy check
-          if S.NDOFs!=1
-              error("Still haven't implemented for many NDOFs")
+          p_nac=S.cl.p.*Nij #momentum alongside NAC direction
+          p_ad=S.cl.p-p_nac #adiabatic momentum
+          East=0.0
+          Eobj=0.0
+          rho_obj=0.0
+          for st in SHEEP_REL[tr_st]
+              c2=abs2(S.el.C[st])
+              rho_obj+=c2
+              Eobj+=S.el.E[st]*c2
           end
-          #Ebar=[S.E[2]*S.tnorm[k-1]^2+S.E[k]*S.tnorm[1]^2 for k in 2:nsts]
-          #E=[S.E[1],sum(S.E[2:end].*(S.tnorm.^2)),sum(Ebar[2:end].*(S.tnorm2.^2))]
-          E=[S.E[1],S.E[1]+S.w11,S.E[1]+S.w22]
-          ΔE=S.p^2/2/mass+E[ast]-E[i] #check energy alongside NAC direction
+          Eobj=Eobj/rho_obj
+          for ast in ast_array
+              c2=abs2(S.el.C[ast])
+              East+=c2*S.el.E[ast]
+          end
+          East=East/rho_kk
+          ΔE=norm2(p_nac)/2/mass+East-Eobj #check energy alongside NAC direction
           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i") #for debugging
-              p_new=sign(S.p)*sqrt(2*mass*ΔE)
-              S.p=p_new
-              S.ast=i
+              p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
+              pnew=p_ad+p_nac_new
+              S=SHEEP_state_builder(S.cl.R,pnew,S.el.C,tr_st,S.el.Ua,S.cl.NDOFs)
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
           break
-      end
+      end #if prob is enough for hop
   end
 
 end
