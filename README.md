@@ -4,7 +4,7 @@ Mixed Quantum Classical (MQC) Dynamics
 	Contact: ignacio.loaiza@mail.utoronto.ca
 
 A Julia implementation of some MQC methods for molecular dynamics.
-Includes Ehrenfest, Tully's Fewest Switches Surface Hopping (FSSH) (in both adiabatic and diabatic representations), Collective Modes (with and without surface hopping) and Split Operator (SO) exact dynamics for debugging.
+Includes Ehrenfest, Tully's Fewest Switches Surface Hopping (FSSH) (in both adiabatic and diabatic representations), Collective Modes (with and without surface hopping), Surface Hopping in Excited Ehrenfest Potential (SHEEP), and Split Operator (SO) exact dynamics for debugging.
 
 
 Currently supports parallelization in 1 node.
