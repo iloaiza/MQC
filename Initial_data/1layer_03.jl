@@ -3,9 +3,9 @@
 const nsts = 9; #number of electronic states
 const mass = 2000 #mass in atomic units
 const dt = 0.1; #timestep in atomic units
-const tf=5000; #final time for integration in a.u.
-Ntrajs=1; #number of trajectories for integration
-flags=500; #number of checkpoints throughout integration (each checkpoint saves the current state, i.e. snapshots)
+const tf=50; #final time for integration in a.u.
+Ntrajs=2; #number of trajectories for integration
+flags=100; #number of checkpoints throughout integration (each checkpoint saves the current state, i.e. snapshots)
 
 include("../include.jl")
 
@@ -18,20 +18,7 @@ C0=zeros(Complex,nsts)
 C0[1]=1
 ast0=1; #initial adiabatic state for surface hopping simulations
 
-D2_0=[1.0+0im,0]
-D3_0=[1.0+0im,0,0]
-
-#BO_DYN=true
-#EH_DYN=true
-#FSSH_DYN=true
-#FSSH_DIA_DYN=true
-#CM2_VANILLA_DYN=true
-#CM3_VANILLA_DYN=true
-#CM2_DYN=true
-#CM3_DYN=true
-CM2_FSSH_DYN=true
-CM3_FSSH_DYN=true
-CM2_FSSH_VANILLA_DYN=true
-CM3_FSSH_VANILLA_DYN=true
+DYN_LIST=["EH","FSSH","CM2","CM2_FSSH"]
+#DYN_LIST=["CM2_FSSH"]
 
 FIRST_RUN=false

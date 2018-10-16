@@ -5,8 +5,9 @@ data/
 
 SO_Initial_data/
 
-Initial_data/
+Initial_data/*
 
+!Initial_data/examples
 !SO_Initial_data/SO_INITIAL_DATA.jl
 !SO_Initial_data/SO_INITIAL_DATA_PARALLEL.jl
 
