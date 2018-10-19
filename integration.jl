@@ -395,7 +395,6 @@ function full_memory_integration(tf,S::CL_state)
     #t00=time()
     for i in 2:steps
         S_ARRAY[i]=runge_step(S_ARRAY[i-1])
-        end
     end
 
     return T,S_ARRAY
@@ -409,7 +408,6 @@ function full_memory_integration(tf,S::MF_state)
     #t00=time()
     for i in 2:steps
         S_ARRAY[i]=runge_step(S_ARRAY[i-1])
-        end
     end
 
     return T,S_ARRAY
@@ -424,7 +422,6 @@ function full_memory_integration(tf,S::SH_state)
     for i in 2:steps
         S_ARRAY[i]=runge_step(S_ARRAY[i-1])
         hop!(S_ARRAY[i])
-        end
     end
 
     return T,S_ARRAY

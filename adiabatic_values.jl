@@ -26,21 +26,7 @@ function CM2_additional_values(p,Γ,W,NDOFs)
     NACs=sum(p/mass.*Γ)
     tvec=-NACs[2:end,1]
 
-    #=          For sign changing z, comment for always positive z
-    tabs=abs.(tvec)
-    tmax=tabs[1]
-    imax=1
-    for i in 1:length(tvec)
-        if tabs[i]>tmax
-            tmax=tabs[i]
-            imax=i
-        end
-    end
-    zsign=sign(tvec[imax])
-    #       =#
-    #zsign=sign(sum(tvec))
-    #tvec=[Γ[i][2:end,1] for i in 1:NDOFs]
-    z=norm(tvec)#*zsign
+    z=norm(tvec)
     if z==0
         tnorm=zeros(size(tvec))
     else
@@ -65,26 +51,19 @@ function CM3_additional_values(wvec,tnorm,z,NDOFs)
     wvec2=w_2.-(k_2.^2/K^2).*(w_2.-wvec[1])
     tvec2=k_2.*(w_2.-wvec[1])./K^2
 
-    #=          For sign changing zbar, comment for always positive zbar
-    tabs=abs.(tvec2)
-    tmax=tabs[1]
-    imax=1
-    for i in 1:length(tvec2)
-        if tabs[i]>tmax
-            tmax=tabs[i]
-            imax=i
-        end
+    tmax=maximum(tvec2)
+    tmin=minimum(tvec2)
+    if abs(tmin)>abs(tmax)
+        zbarsign=sign(tmin)
+    else
+        zbarsign=sign(tmax)
     end
-    zbarsign=sign(tvec2[imax])
-    #        =#
-    #zbarsign=sign(sum(tvec2))
-
-    zbar=norm(tvec2)#*zbarsign
+    zbar=norm(tvec2)*zbarsign
 
     if zbar==0
         tnorm2=zeros(size(tvec2))
     else
-        tnorm2=tvec2./zbar
+        tnorm2=tvec2./zbar  #carries zbar sign! needed for equation consistency
     end
 
     return zbar,wvec2,tnorm2

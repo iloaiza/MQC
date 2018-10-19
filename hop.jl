@@ -99,7 +99,6 @@ function hop!(S::CM2_FSSH_state)
               for i in 3:nsts
                   U[i,i]=-S.CM2.tnorm[1]
               end
-              U=U./abs(S.CM2.z)
 
               Udag=U'
 
@@ -158,9 +157,8 @@ function hop!(S::CM3_FSSH_state)
               for i in 3:nsts
                   U2[i,i]=-S.CM3.tnorm[1]
               end
-              U2=U2./abs(S.CM3.z)
 
-              U3[1,1]=abs(S.CM3.zbar)
+              U3[1,1]=S.CM3.zbar
               U3[2,2]=1
               for i in 1:nsts-2
                   U3[3,i+2]=S.CM3.tnorm2[i]
@@ -169,7 +167,6 @@ function hop!(S::CM3_FSSH_state)
               for i in 4:nsts
                   U3[i,i]=-S.CM3.tnorm2[1]
               end
-              U3=U3./abs(S.CM3.zbar)
 
               U=U2*U3
               Udag=U'

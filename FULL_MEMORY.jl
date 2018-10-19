@@ -3,12 +3,6 @@ using Distributions #used for initial conditions distributions (such as wigner)
 
 input_name=ARGS[1] #when running, use julia SINGLE_TEST.jl NAME_OF_INITIAL_FILE (without .jl, must be inside Initial_data directory)
 
-BO_DYN=false
-EH_DYN=false
-CM2_VANILLA_DYN=false
-CM3_VANILLA_DYN=false
-CM2_DYN=false
-CM3_DYN=false
 FIRST_RUN=true
 ast0=1 #default starting state is ground state (if not specified in initial file)
 
@@ -16,7 +10,7 @@ println("Including function modules")
 include("Initial_data/"*input_name*".jl")
 
 ########## Stuff for text output (i.e. do a logfile!)
-file="./data/SINGLE_"*potname*"_R0($R0)_p0($p0).h5"
+file="./data/FULL_"*potname*"_R0($R0)_p0($p0).h5"
 
 S_EH=EH_state_builder(R0,p0,C0)
 Ep0,~,~,~,~,~=adiabatic_values(R0);
@@ -80,31 +74,13 @@ for DYN in DYN_LIST
 end
 
 for DYN in DYN_LIST
-    if DYN in CL_LIST
-        println("BEGINNING $DYN INTEGRATION")
-        te0=time()
-        integ_string="single_integration(tf,S_$(DYN))"
-        T,R,P=eval(Meta.parse(integ_string))
-        tef=time()
-        println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
-        CL_save(T,R,P,file,DYN)
-    elseif DYN in MF_LIST
-        println("BEGINNING $DYN INTEGRATION")
-        te0=time()
-        integ_string="single_integration(tf,S_$(DYN))"
-        T,R,P,C=eval(Meta.parse(integ_string))
-        tef=time()
-        println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
-        MF_save(T,R,P,C,file,DYN)
-    elseif DYN in SH_LIST
-        println("BEGINNING $DYN INTEGRATION")
-        te0=time()
-        integ_string="single_integration(tf,S_$(DYN))"
-        T,R,P,C,AST=eval(Meta.parse(integ_string))
-        tef=time()
-        println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
-        SH_save(T,R,P,C,AST,file,DYN)
-    end
+    println("BEGINNING $DYN INTEGRATION")
+    te0=time()
+    integ_string="full_memory_integration(tf,S_$(DYN))"
+    T,S=eval(Meta.parse(integ_string))
+    tef=time()
+    println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
+    full_memory_save(T,S,file)
 end
 
 println("FINISHED SUCCESSFULLY!")

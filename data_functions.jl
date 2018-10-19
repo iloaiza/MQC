@@ -108,6 +108,94 @@ function general_K_read(file,prefix)
     return A
 end
 
+function full_memory_save(T,S_ARRAY,file)
+    prefix=S_ARRAY[1].prefix
+    steps=length(S_ARRAY)
+    NDOFs=S_ARRAY[1].cl.NDOFs
+    if NDOFs==1
+        R=zeros(steps)
+        p=zeros(steps)
+    else
+        R=zeros(steps,NDOFs)
+        p=zeros(steps,NDOFs)
+    end
+
+    if !(prefix in CL_LIST) #not classical, need electronic coefficients tracking
+        eff_sts=length(S_ARRAY[1].el.C)
+        C=zeros(Complex,steps,eff_sts)
+        U=zeros(steps,nsts,nsts)
+    end
+
+    for k in 1:steps
+        S=S_ARRAY[k]
+        if NDOFs==1
+            R[k]=S.cl.R
+            p[k]=S.cl.p
+        else
+            R[k,:].=S.cl.R
+            p[k,:].=S.cl.p
+        end
+        if !(prefix in CL_LIST) #not classical, need electronic coefficients tracking
+            C[k,:].=S.el.C
+            U[k,:,:].=S.el.Ua
+        end
+    end
+    Creal=zeros(size(C))
+    Cimag=zeros(size(C))
+    Creal.=real.(C)
+    Cimag.=imag.(C)
+
+    h5write(file,"R_"*prefix,R)
+    h5write(file,"p_"*prefix,p)
+    if !(prefix in CL_LIST)
+        h5write(file,"Creal_"*prefix,Creal)
+        h5write(file,"Cimag_"*prefix,Cimag)
+        h5write(file,"U_"*prefix,U)
+    end
+    if prefix in SH_LIST
+        AST=[S_ARRAY[k].ast for k in 1:steps]
+        h5write(file,"AST_"*prefix,AST)
+    end
+    h5write(file,"T_"*prefix,T)
+end
+
+function full_memory_load(prefix,file,flags=100)
+    R=h5read(file,"R_"*prefix)
+    p=h5read(file,"p_"*prefix)
+    T=h5read(file,"T_"*prefix)
+    steps=length(T)
+    NDOFs=length(R[1,:])
+
+    kmap=Int.(round.(collect(range(1,stop=steps,length=flags))))
+
+    if !(prefix in CL_LIST)
+        C=h5read(file,"Creal_"*prefix)+1im.*h5read(file,"Cimag_"*prefix)
+        U=h5read(file,"U_"*prefix)
+        if prefix in SH_LIST
+            AST=h5read(file,"AST_"*prefix)
+        end
+    end
+
+    if NDOFs==1
+        if prefix in CL_LIST
+            S_ARRAY=[builder_CL_state(R[k],p[k],prefix,NDOFs) for k in kmap]
+        elseif prefix in MF_LIST
+            S_ARRAY=[builder_MF_state(R[k],p[k],C[k,:],prefix,U[k,:,:],NDOFs) for k in kmap]
+        else
+            S_ARRAY=[builder_SH_state(R[k],p[k],C[k,:],AST[k],prefix,U[k,:,:],NDOFs) for k in kmap]
+        end
+    else
+        if prefix in CL_LIST
+            S_ARRAY=[builder_CL_state(R[k,:],p[k,:],prefix,NDOFs) for k in kmap]
+        elseif prefix in MF_LIST
+            S_ARRAY=[builder_MF_state(R[k,:],p[k,:],C[k,:],prefix,U[k,:,:],NDOFs) for k in kmap]
+        else
+            S_ARRAY=[builder_SH_state(R[k,:],p[k,:],C[k,:],AST[k],prefix,U[k,:,:],NDOFs) for k in kmap]
+        end
+    end
+
+    return T[kmap],S_ARRAY
+end
 
 function refl_trans_SH(K,FR,Fast,crossing_point)
     #this function is used for treating K_SIMULATIONS outputs
