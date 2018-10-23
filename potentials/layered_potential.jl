@@ -125,7 +125,7 @@ function pot_layered(R,beta=0.03,gamma=0.02,delta=0.01)
 end
 
 
-function pot_2D_sinus(R,c,l=10,d=1e-4,h=0.02,w=0.5,RL=[1e-2,1e-2])#w=width, h=height, c=normal coupling, d=intra_layer coupling, l=layers, RL=layer-layer dist
+function pot_2D_sinus(R,c,l=10,d=1e-4,h=0.02,w=0.5,RL=[5e-2,5e-2])#w=width, h=height, c=normal coupling, d=intra_layer coupling, l=layers, RL=layer-layer dist
     H=zeros(2*l,2*l)
     dHx=zeros(2*l,2*l)
     dHy=zeros(2*l,2*l)
