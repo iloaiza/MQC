@@ -1,6 +1,6 @@
 META_DICT=Dict()
 
-tic00=time()
+tic000=time()
 
 INSIDE_SIMULATIONS=true
 #INSIDE_SIMULATIONS=false                        #define false for running on its own, true (i.e. comment this line) for automatic running inside K_SIMULATIONS
@@ -17,12 +17,12 @@ if !INSIDE_SIMULATIONS
                 jl_file=pwd()*"/Initial_data/"*INITIAL_NAME*".jl"
                 @show jl_file
                 include(jl_file)
-                dir_name="data/K_"*potname*"_R0($R0)"
+                dirname="data/K_"*potname*"_R0($R0)"
                 NDOFs=length(R0)
                 @show K
         else
                 K=1
-                dir_name=1
+                dirname=1
                 DYN_LIST=["EH"]
         end
 end
@@ -82,7 +82,7 @@ end
 
 
 for (pnum,p0) in enumerate(K)
-    file_name=dir_name*"/p0($p0).h5"
+    file_name=dirname*"/p0($p0).h5"
     for DYN in DYN_LIST
                 dyn_sts=eval(Meta.parse("$(DYN)_sts"))
                 if DYN in CL_LIST
@@ -128,7 +128,7 @@ end #for pnums
 
 
 "Starting save file"
-file_name=dir_name*"/K_SIMULATION.h5"
+file_name=dirname*"/K_SIMULATION.h5"
 if FIRST_RUN
     h5write(file_name,"K",K)
     h5write(file_name,"META_DICT",string(META_DICT))
@@ -165,4 +165,6 @@ end
 
 
 println("FINISHED SIMULATIONS, TOTAL SAVE TIME WAS!")
+println("$(time()-tic000) seconds")
+println("GRAND TOTAL TIME OF SIMULATIONS WAS")
 println("$(time()-tic00) seconds")
