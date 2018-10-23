@@ -67,6 +67,48 @@ function my_histogram(X,xmin,xmax,n)
     return plotting_X,H
 end
 
+function is_2D_point_in(x,y,xmin,xmax,ymin,ymax,up_eq=false)
+    if up_eq==true
+        if xmin<=x<=xmax && ymin<=y<=ymax
+            return true
+        else
+            return false
+        end
+    else
+        if xmin<=x<xmax && ymin<=y<ymax
+            return true
+        else
+            return false
+        end
+    end
+end
+
+
+function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
+    Xarr=range(xrange[1],stop=xrange[2],length=nx+1)
+    Yarr=range(yrange[1],stop=yrange[2],length=ny+1)
+    xstep=Xarr[2]-Xarr[1]
+    ystep=Yarr[2]-Yarr[1]
+    xmin=xrange[1]
+    ymin=yrange[1]
+    plotting_X=range(Xarr[1]+xstep/2,stop=Xarr[end]-xstep/2,length=nx)
+    plotting_Y=range(Yarr[1]+ystep/2,stop=Yarr[end]-ystep/2,length=ny)
+    H=zeros(nx,ny)
+
+    for x in X
+        for y in Y
+            x_diff=x-xmin
+            y_diff=y-ymin
+            jx=Int(floor(x_diff/xstep))+1
+            jy=Int(floor(y_diff/ystep))+1
+            H[jx,jy]+=1
+        end
+    end
+
+    return [plotting_X,plotting_Y],H
+end
+
+
 function super_histo(R,n)
     xmin=minimum(R)
     xmax=maximum(R)
@@ -90,6 +132,28 @@ function super_histo(R,xmin,xmax,n)
 
     return plotting_R,histo_R
 end
+
+function multi_d_histo(R,min_arr,max_arr,n)
+    flags=length(R[:,1,1])
+    ndims=length(R[1,:,1])
+    if length(n)==1
+        n=Int.(n.*ones(ndims))
+    end
+    if ndims>2
+        error("No histogram implementation for 3 or more dimensions...")
+    end
+    plotting_X=zeros(n[1],flags)
+    plotting_Y=zeros(n[2],flags)
+    histo_R=zeros(n[1],n[2],flags)
+    for i in 1:flags
+        plotting_R,histo_R[:,:,i]=my_2D_histogram(R[i,1,:],R[i,2,:],[min_arr[1];max_arr[1]],[min_arr[2];max_arr[2]],n[1],n[2])
+        plotting_X[:,i].=plotting_R[1]
+        plotting_Y[:,i].=plotting_R[2]
+    end
+
+    return [plotting_X,plotting_Y],histo_R
+end
+
 
 function integral(f,a,b,dx=1e-5) #Riemann integral
     X=collect(a:dx:b)
