@@ -29,6 +29,7 @@ function hop!(S::FSSH_state)
               p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
               pnew=p_ad+p_nac_new
               S=FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
+              return S
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
@@ -36,6 +37,7 @@ function hop!(S::FSSH_state)
       end
   end
 
+  return S
 end
 
 
@@ -64,11 +66,12 @@ function hop!(S::FSSH_dia_state)
               #println("hop from $ast to $i")
               pnew=sign(S.cl.p)*sqrt(2*mass*ΔE)
               S=FSSH_dia_state_builder(S.cl.R,pnew,S.el.C,i,S.cl.NDOFs)
+              return S
           end
           break
       end
   end
-
+  return S
 end
 
 
@@ -118,6 +121,7 @@ function hop!(S::CM2_FSSH_state)
               p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
               pnew=p_nac_new+p_ad
               S=CM2_FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
+              return S
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
@@ -125,6 +129,7 @@ function hop!(S::CM2_FSSH_state)
       end
   end
 
+  return S
 end
 
 
@@ -188,6 +193,7 @@ function hop!(S::CM3_FSSH_state)
               p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
               pnew=p_nac_new+p_ad
               S=CM3_FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
+              return S
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           #else
@@ -197,6 +203,7 @@ function hop!(S::CM3_FSSH_state)
       end
   end
 
+  return S
 end
 
 function hop!(S::SHEEP_state)
@@ -250,6 +257,7 @@ function hop!(S::SHEEP_state)
               p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
               pnew=p_ad+p_nac_new
               S=SHEEP_state_builder(S.cl.R,pnew,S.el.C,tr_st,S.el.Ua,S.cl.NDOFs)
+              return S
               #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
               #@show Eini-Efin #for debugging (1)
           end
@@ -257,4 +265,5 @@ function hop!(S::SHEEP_state)
       end #if prob is enough for hop
   end
 
+  return S
 end

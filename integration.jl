@@ -82,7 +82,7 @@ function single_integration(tf,S::SH_state,flags=100)
     Ast[1]=S.ast
     for i in 2:steps
         S=runge_step(S)
-        hop!(S)
+        S=hop!(S)
         if Tf[counter]==T[i]
             Rvec[counter,:].=S.cl.R
             pvec[counter,:].=S.cl.p
@@ -338,13 +338,13 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
             S=runge_step(S)
-            hop!(S)
+            S=hop!(S)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
             tf+=dt
             S=runge_step(S)
-            hop!(S)
+            S=hop!(S)
         end
     else
         error("R_min is neither a number nor an interval!")
@@ -378,7 +378,7 @@ function many_distance_integration(R_min,S::SH_state,Ntrajs,tmax=10000)
         P_array[i,:].=S.cl.p
         C_real_array[i,:].=real.(S.el.C)
         C_imag_array[i,:].=imag.(S.el.C)
-        AST_array[i,]=S.ast
+        AST_array[i]=S.ast
     end
 
     C_array=C_real_array+1im.*C_imag_array
@@ -421,7 +421,7 @@ function full_memory_integration(tf,S::SH_state)
     #t00=time()
     for i in 2:steps
         S_ARRAY[i]=runge_step(S_ARRAY[i-1])
-        hop!(S_ARRAY[i])
+        S_ARRAY[i]=hop!(S_ARRAY[i])
     end
 
     return T,S_ARRAY
