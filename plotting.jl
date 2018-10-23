@@ -89,3 +89,116 @@ function diabatic_1D_plot(Rmin,Rmax,res,basest=1,targetsts=2)
 
     return R
 end
+
+function refl_trans_SH(K,FR,Fast,crossing_point)
+    #this function is used for treating K_SIMULATIONS outputs
+    #for tully-like plots. It separates transmitted, reflected ground state
+    #and transmitted excited state
+    GS_TRANS_FSSH=zeros(size(K))
+    GS_REFL_FSSH=zeros(size(K))
+    ET_TRANS_FSSH=zeros(size(K))
+    for k in 1:length(K)
+        for i in 1:Ntrajs
+            if FR_FSSH[k,i]>crossing_point && Fast_FSSH[k,i]!=1
+                ET_TRANS_FSSH[k]+=1
+            elseif FR_FSSH[k,i]>crossing_point && Fast_FSSH[k,i]==1
+                GS_TRANS_FSSH[k]+=1
+            else
+                GS_REFL_FSSH[k]+=1
+            end
+        end
+    end
+    GS_TRANS_FSSH=GS_TRANS_FSSH/Ntrajs
+    GS_REFL_FSSH=GS_REFL_FSSH/Ntrajs
+    ET_TRANS_FSSH=ET_TRANS_FSSH/Ntrajs
+
+    return GS_TRANS_FSSH,GS_REFL_FSSH,ET_TRANS_FSSH
+end
+
+function GS_SH_prob(K,Fast)
+    GS_PROB=zeros(size(K))
+    for k in 1:length(K)
+        for traj in 1:Ntrajs
+            if Fast[traj,k]==1
+                GS_PROB[k]+=1
+            end
+        end
+    end
+
+    return GS_PROB./Ntrajs
+end
+
+function GS_MF_prob(K,Fpop)
+    GS_PROB=zeros(Float64,size(K))
+    for k in 1:length(K)
+        GS_PROB[k]+=Fpop[k,1]
+    end
+
+    return GS_PROB
+end
+
+is_true(R,P)=true
+
+function multi_MF_prob(K,A,sts,condition=is_true)
+    #sts is an array with all the electronic states to track
+    #condition(A) is a function that returns some true value as a function of R and P
+    num_sts=length(sts)
+    k_size=length(K)
+    MULTI_PROB=zeros(Float64,k_size,num_sts)
+    FR=A[1]
+    FP=A[2]
+    Fpop=A[3]
+
+    if length(A)==3
+        for st in sts
+            for k in 1:k_size
+                if condition(FR[k,:],FP[k,:])==true
+                    MULTI_PROB[k,st]+=Fpop[k,st]
+                end
+            end
+        end
+    elseif length(A)==4
+        Ntrajs=length(FR[:,1,1])
+        for traj in 1:Ntrajs
+            for st in sts
+                for k in 1:k_size
+                    if condition(FR[traj,k,:],FP[traj,k,:])==true
+                        MULTI_PROB[k,st]+=Fpop[traj,k,st]
+                    end
+                end
+            end
+        end
+        MULTI_PROB=MULTI_PROB/Ntrajs
+    end
+
+    return MULTI_PROB
+
+end
+
+function multi_SH_prob(K,A,sts,condition=is_true)
+    #sts is an array with all the electronic states to track
+    #condition(A) is a function that returns some true value as a function of R and P
+    num_sts=length(sts)
+    k_size=length(K)
+    MULTI_PROB=zeros(Float64,k_size,num_sts)
+    FR=A[1]
+    FP=A[2]
+    Fpop=A[3]
+    Fast=A[4]
+    Ntrajs=length(FR[:,1,1])
+
+    for traj in 1:Ntrajs
+        for st in sts
+            for k in 1:k_size
+                if Fast[traj,k]==st
+                    if condition(FR[traj,k,:],FP[traj,k,:])==true
+                        MULTI_PROB[k,st]+=1
+                    end
+                end
+            end
+        end
+    end
+
+    return MULTI_PROB/Ntrajs
+
+end

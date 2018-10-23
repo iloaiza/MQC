@@ -31,7 +31,7 @@ function matrix_builder(npts,X,P,pot)
     Vmat=SharedArray(zeros(nsts,nsts,npts))
     hatW=SharedArray(zeros(nsts,npts))
     U=SharedArray(zeros(nsts,nsts,npts))
-    @sync @parallel for ipt in 1:npts
+    @sync @distributed for ipt in 1:npts
         V=pot(X[ipt])
         for i in 1:nsts
             for j in 1:nsts
@@ -51,7 +51,7 @@ function matrix_builder(npts,X,P,pot)
     expT=exp.(-1im*hatT*δt/2);
 
     expV=SharedArray{Complex128}(zeros(Complex,nsts,nsts,npts))
-    @sync @parallel for ipt in 1:npts
+    @sync @distributed for ipt in 1:npts
         expV[:,:,ipt]=U[:,:,ipt]*diagm(exp.(-1im*hatW[:,ipt]*δt))*(U[:,:,ipt]')
     end
 
@@ -75,15 +75,15 @@ function dia_2_ad(Ψd,U,npts=length(Ψd[:,1]))
 end
 
 function next_step!(Ψd,expT,expV,npts)
-    @sync @parallel for ist in 1:nsts
+    @sync @distributed for ist in 1:nsts
         Ψd[:,ist]=ifft(expT.*fft(Ψd[:,ist]))
     end
 
-    @sync @parallel for ipt in 1:npts
+    @sync @distributed for ipt in 1:npts
         Ψd[ipt,:]=expV[:,:,ipt]*Ψd[ipt,:]
     end
 
-    @sync @parallel for ist in 1:nsts
+    @sync @distributed for ist in 1:nsts
         Ψd[:,ist]=ifft(expT.*fft(Ψd[:,ist]))
     end
 end
@@ -156,8 +156,8 @@ function SO_read(file)
 end
 
 function SO_histo_builder(X,PX,res,xmin=X[1],xmax=X[end])
-    Y=linspace(xmin,xmax,res)
-    H=zeros(Y)
+    Y=range(xmin,stop=xmax,length=res)
+    H=zeros(size(Y))
     dY=Y[2]-Y[1]
     dX=X[2]-X[1]
     size_factor=dX/dY
