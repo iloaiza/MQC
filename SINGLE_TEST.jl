@@ -3,12 +3,6 @@ using Distributions #used for initial conditions distributions (such as wigner)
 
 input_name=ARGS[1] #when running, use julia SINGLE_TEST.jl NAME_OF_INITIAL_FILE (without .jl, must be inside Initial_data directory)
 
-BO_DYN=false
-EH_DYN=false
-CM2_VANILLA_DYN=false
-CM3_VANILLA_DYN=false
-CM2_DYN=false
-CM3_DYN=false
 FIRST_RUN=true
 ast0=1 #default starting state is ground state (if not specified in initial file)
 
