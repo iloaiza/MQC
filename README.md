@@ -25,5 +25,6 @@ Check the folders Initial_conditions and SO_Initial_conditions for the initial c
 
 References.
 
-(1) - Tully, J. C., Molecular dynamics with electronic transitions. J. Chem. Phys. 93, 1061 (1990)
-(2) - Ryabinkin, I. G., and A. F. Izmaylov, Mixed Quantum-Classical Dynamics Using Collective Electronic Variables: A Better Alternative to Electronic Friction Theories. J. Phys. Chem. Lett., 8 (2), pp 440–444 (2017)
+	(1) - Tully, J. C., Molecular dynamics with electronic transitions. J. Chem. Phys. 93, 1061 (1990)
+
+	(2) - Ryabinkin, I. G., and A. F. Izmaylov, Mixed Quantum-Classical Dynamics Using Collective Electronic Variables: A Better Alternative to Electronic Friction Theories. J. Phys. Chem. Lett., 8 (2), pp 440–444 (2017)
