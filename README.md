@@ -25,6 +25,10 @@ Check the folders Initial_conditions and SO_Initial_conditions for the initial c
 
 References.
 
-	(1) - J. C. Tully, Molecular dynamics with electronic transitions. J. Chem. Phys. 93, 1061 (1990)
+	(1) - J. C. Tully, Molecular dynamics with electronic transitions. J. Chem. Phys. 93, 1061 (1990).
 
-	(2) - I. G. Ryabinkin, and A. F. Izmaylov, Mixed Quantum-Classical Dynamics Using Collective Electronic Variables: A Better Alternative to Electronic Friction Theories. J. Phys. Chem. Lett., 8 (2), pp 440–444 (2017)
+	(2) - I. G. Ryabinkin, and A. F. Izmaylov, Mixed Quantum-Classical Dynamics Using Collective Electronic Variables: A Better Alternative to Electronic Friction Theories. J. Phys. Chem. Lett., 8 (2), pp 440–444 (2017).
+
+	(3) - I. Loaiza, I. G. Ryabinkin, and A. F. Izmaylov, under preparation.
+
+	(4) - S. A. Fischer, C. T. Chapman, and X. Li, Surface hopping with Ehrenfest excited potential. J. Chem. Phys., 135, 144102 (2011).
