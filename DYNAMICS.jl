@@ -30,7 +30,7 @@ end
 S_EH=EH_state_builder(R0,p0,C0)
 filename="./data/"*potname*"_R0($R0)_p0($p0).h5"
 
-Ep0,~,~,~,~,~=adiabatic_values(R0);
+Ep0,_,_,_,_,_=adiabatic_values(R0);
 E0=real(C0'*Diagonal(Ep0)*C0)[1]+sum(abs2.(p0))/2/mass;
 
 

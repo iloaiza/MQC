@@ -1,5 +1,5 @@
 function SO_pot(potential_function,R)
-    H,~=potential_function(R)
+    H,_=potential_function(R)
     return H
 end
 

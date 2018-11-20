@@ -5,7 +5,7 @@ function EH_energy_check(R,P,C)
     K=P.^2/2/mass #kinetic energy at each step
 
     for (i,r) in enumerate(R)
-        energy,~,~,~,~,~=adiabatic_values(r)
+        energy,_,_,_,_,_=adiabatic_values(r)
         Ep[i,:].=energy[:]
         Eeff[i].=real.(C[i,:]'*diagm(energy)*C[i,:])
     end
@@ -20,7 +20,7 @@ function FSSH_energy_check(R,P,AST)
     K=P.^2/2/mass #kinetic energy at each step
 
     for (i,r) in enumerate(R)
-        energy,~,~,~,~,~=adiabatic_values(r)
+        energy,_,_,_,_,_=adiabatic_values(r)
         Ep[i,:].=energy[:]
         Eeff[i]=energy[AST[i]]
     end
@@ -29,7 +29,7 @@ function FSSH_energy_check(R,P,AST)
 end
 
 function EH_sanity_check(R,P,C)
-    ~,Eeff,K=EH_energy_check(R,P,C)
+    _,Eeff,K=EH_energy_check(R,P,C)
     Eini=Eeff[1]+K[1]
     steps=length(R)
     DE=[Eeff[i]+K[i]-Eini for i in 1:steps]
@@ -52,7 +52,7 @@ function EH_sanity_check(R,P,C)
 end
 
 function FSSH_sanity_check(R,P,C,AST)
-    ~,Eeff,K=FSSH_energy_check(R,P,AST)
+    _,Eeff,K=FSSH_energy_check(R,P,AST)
     Eini=Eeff[1]+K[1]
     steps=length(R)
     DE=[Eeff[i]+K[i]-Eini for i in 1:steps]

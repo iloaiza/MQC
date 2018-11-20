@@ -99,7 +99,7 @@ end
 
 function FSSH_dia_state_builder(R,p,C,ast=1,NDOFs=length(R),first=false)
     if first==true
-        ~,~,~,~,Ua,~=adiabatic_values(R,NDOFs)
+        _,_,_,_,Ua,_=adiabatic_values(R,NDOFs)
         C=Ua'*C
         Cprob=abs2.(C)
         for i in 2:nsts

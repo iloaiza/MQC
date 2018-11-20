@@ -93,7 +93,7 @@ for p0 in K
     S_EH=EH_state_builder(R0,p0,C0)
     file=dirname*"/p0($p0).h5"
 
-    Ep0,~,~,~,~,~=adiabatic_values(R0);
+    Ep0,_,_,_,_,_=adiabatic_values(R0);
     E0=real(C0'*Diagonal(Ep0)*C0)[1]+p0^2/2/mass;
 
     if FIRST_RUN
