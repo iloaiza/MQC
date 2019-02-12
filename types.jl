@@ -160,11 +160,11 @@ end
 
 #CREATE STATE BUILDING FUNCTIONS
 #####   CL  #####
-CL_string="function builder_CL_state(R,p,prefix,NDOFs=length(R),mem=0);"
+CL_string="function builder_CL_state(R,p,prefix,Uold=0,NDOFs=length(R),mem=0);"
 CL_if_strings=String[]
 
 for DYN in CL_LIST
-    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,NDOFs,mem);  end;    """)
+    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,Uold,NDOFs,mem);  end;    """)
 end
 CL_string=CL_string*prod(CL_if_strings)*"return S;  end"
 eval(Meta.parse(CL_string))

@@ -54,13 +54,13 @@ function Q_state_builder(C,R,Uold=0,NDOFs=length(R))
     return Q_state(C,E,W,F,Ua,Γ)
 end
 
-function BO_state_builder(R,p,NDOFs=length(R),mem=0)
+function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,0,NDOFs)
 
     pdot=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k].=-el.F[k][1]
+        pdot[k]=-el.F[k][1]
     end
     ODE=ODE_state(p/mass,pdot,0,0)
 
@@ -262,17 +262,16 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reres
 end
 
 #IMPLEMENTATION UNDER WAY!!
-function FRIC_state_builder(R,p,NDOFs=length(R),mem=0)    #this is markovian friction with no memory!!
+function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markovian friction with no memory!!
     cl=C_state_builder(R,p,NDOFs,mem)
-    el=Q_state_builder(0,R,0,NDOFs)
+    el=Q_state_builder(0,R,Uold,NDOFs)
 
     pdot=zeros(NDOFs)
 
-
-    E_k=zeros(Complex,nsts-1)
-    F_k=zeros(Complex,nsts-1)
+    E_k=zeros(nsts-1)
+    F_k=zeros(nsts-1)
     if mem==0 #first run, initialize ek's and fk's
-        mem=zeros(Complex,2*(nsts-1))
+        mem=zeros(2*(nsts-1))
     else
         for i in 1:nsts-1 #could be defined more simply just as zeros, but construction is shown for future reference
             E_k[i]=mem[i]
@@ -280,23 +279,27 @@ function FRIC_state_builder(R,p,NDOFs=length(R),mem=0)    #this is markovian fri
         end
     end
 
-    E_kdot=zeros(Complex,nsts-1)
-    F_kdot=zeros(Complex,nsts-1)
+    Rdot=p/mass
+    E_kdot=zeros(nsts-1)
+    F_kdot=zeros(nsts-1)
+    memdot=zeros(2*(nsts-1))
     for i in 1:nsts-1
         E_kdot[i]=sum(Rdot.*el.Γ)[i+1,1]*el.W[i+1,1]-el.W[i+1,1]*F_k[i]
         F_kdot[i]=el.W[i+1,1]*E_k[i]
+        memdot[i]=E_kdot[i]
+        memdot[i+nsts-1]=F_kdot[i]
     end
 
 
     for k in 1:NDOFs
-        pdot[k].=-el.F[k][1]
+        pdot[k]=-el.F[k][1]
         for st in 1:nsts-1
             pdot[k]+=-2*el.Γ[k][st+1,1]*E_k[st]
         end
     end
-    ODE=ODE_state(p/mass,pdot,0,memdot)
+    ODE=ODE_state(Rdot,pdot,0,memdot)
 
-    return FRIC_state(cl,el,ODE,"BO",NDOFs,mem)
+    return FRIC_state(cl,el,ODE,"FRIC")
 end
 
 ################################################################################

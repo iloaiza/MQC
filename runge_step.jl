@@ -11,7 +11,7 @@ function runge_step(S::CL_state,δt=dt,NDOFs=S.cl.NDOFs)
     R2=R0+kR1/2
     p2=p0+kp1/2
     mem2=mem0+kmem1/2
-    S=builder_CL_state(R2,p2,S.prefix,NDOFs,mem2)
+    S=builder_CL_state(R2,p2,S.prefix,S.el.Ua,NDOFs,mem2)
     dR2,dp2,dmem2=diff_eq(S)
     kR2=δt*dR2
     kp2=δt*dp2
@@ -20,7 +20,7 @@ function runge_step(S::CL_state,δt=dt,NDOFs=S.cl.NDOFs)
     R3=R0+kR2/2
     p3=p0+kp2/2
     mem3=mem0+kmem2/2
-    S=builder_CL_state(R3,p3,S.prefix,NDOFs,mem3)
+    S=builder_CL_state(R3,p3,S.prefix,S.el.Ua,NDOFs,mem3)
     dR3,dp3,dmem3=diff_eq(S)
     kR3=δt*dR3
     kp3=δt*dp3
@@ -29,7 +29,7 @@ function runge_step(S::CL_state,δt=dt,NDOFs=S.cl.NDOFs)
     R4=R0+kR3
     p4=p0+kp3
     mem4=mem0+kmem3
-    S=builder_CL_state(R4,p4,S.prefix,NDOFs,mem4)
+    S=builder_CL_state(R4,p4,S.prefix,S.el.Ua,NDOFs,mem4)
     dR4,dp4,dmem4=diff_eq(S)
     kR4=δt*dR4
     kp4=δt*dp4
@@ -40,7 +40,7 @@ function runge_step(S::CL_state,δt=dt,NDOFs=S.cl.NDOFs)
     memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
 
 
-    return builder_CL_state(Rnew,pnew,S.prefix,NDOFs,memnew)
+    return builder_CL_state(Rnew,pnew,S.prefix,S.el.Ua,NDOFs,memnew)
 end
 
 function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
