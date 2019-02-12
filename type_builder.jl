@@ -267,22 +267,36 @@ function FRIC_state_builder(R,p,NDOFs=length(R),mem=0)    #this is markovian fri
     el=Q_state_builder(0,R,0,NDOFs)
 
     pdot=zeros(NDOFs)
-    γ=zeros(NDOFs,NDOFs)
-    for α in 1:NDOFs
-        for ν in 1:NDOFs
-            γ[α,ν]=2*sum([el.Γ[α][1,j]*el.Γ[ν][1,j]*el.W[j,1] for j in 2:nsts])
+
+
+    E_k=zeros(Complex,nsts-1)
+    F_k=zeros(Complex,nsts-1)
+    if mem==0 #first run, initialize ek's and fk's
+        mem=zeros(Complex,2*(nsts-1))
+    else
+        for i in 1:nsts-1 #could be defined more simply just as zeros, but construction is shown for future reference
+            E_k[i]=mem[i]
+            F_k[i]=mem[i+nsts-1]
         end
     end
 
-    memdot=1
+    E_kdot=zeros(Complex,nsts-1)
+    F_kdot=zeros(Complex,nsts-1)
+    for i in 1:nsts-1
+        E_kdot[i]=sum(Rdot.*el.Γ)[i+1,1]*el.W[i+1,1]-el.W[i+1,1]*F_k[i]
+        F_kdot[i]=el.W[i+1,1]*E_k[i]
+    end
 
 
     for k in 1:NDOFs
-        pdot[k].=-el.F[k][1]-mass*sum([γ[k,α]*p[α] for α in 1:NDOFs])
+        pdot[k].=-el.F[k][1]
+        for st in 1:nsts-1
+            pdot[k]+=-2*el.Γ[k][st+1,1]*E_k[st]
+        end
     end
     ODE=ODE_state(p/mass,pdot,0,memdot)
 
-    return BO_state(cl,el,ODE,"BO")
+    return FRIC_state(cl,el,ODE,"BO",NDOFs,mem)
 end
 
 ################################################################################
