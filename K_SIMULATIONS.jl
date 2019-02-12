@@ -108,9 +108,15 @@ for p0 in K
     for DYN in DYN_LIST
         dyn_sts=eval(Meta.parse("$(DYN)_sts"))
         println("BEGINNING $DYN INTEGRATION")
+        if eval(Meta.parse("@isdefined $(DYN)_mem")) #block for filling memory variable with 0 if it is not defined
+            println("""Using memory of $(DYN)_mem = $("$(DYN)_mem") for $(DYN)""")
+        else
+            eval(Meta.parse("$(DYN)_mem=0"))
+            println("Memory not defined for $(DYN), make sure it's intentional")
+        end
         if DYN in CL_LIST
             te0=time()
-            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0),$tmax)"
+            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,0,$NDOFs,$(DYN)_mem),$tmax)"
             T,S=eval(Meta.parse(single_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
@@ -124,7 +130,7 @@ for p0 in K
             else
                 D0=C0
             end
-            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0),$tmax)"
+            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,0,$NDOFs,$(DYN)_mem),$tmax)"
             T,S=eval(Meta.parse(single_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
@@ -138,7 +144,7 @@ for p0 in K
             else
                 D0=C0
             end
-            many_dist_string="many_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,$ast0),$Ntrajs,$tmax)"
+            many_dist_string="many_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,$ast0,0,$NDOFs,$(DYN)_mem),$Ntrajs,$tmax)"
             Ts,Rs,Ps,Cs,ASTs=eval(Meta.parse(many_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")

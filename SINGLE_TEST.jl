@@ -39,15 +39,22 @@ println("The initial conditions are")
 @show p0
 @show C0
 @show E0
+
+NDOFs=length(R0)
 println("The dynamics that will be done are:")
 for DYN in DYN_LIST
+    println(DYN)
     dyn_sts=eval(Meta.parse("$(DYN)_sts"))
+    if eval(Meta.parse("@isdefined $(DYN)_mem")) #block for filling memory variable with 0 if it is not defined
+        println("""Using memory of $(DYN)_mem = $("$(DYN)_mem") for $(DYN)""")
+    else
+        eval(Meta.parse("$(DYN)_mem=0"))
+        println("Memory not defined for $(DYN), make sure it's intentional")
+    end
     if DYN in CL_LIST
-        println(DYN)
-        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0)"
+        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     elseif DYN in MF_LIST
-        println(DYN)
         if dyn_sts!=nsts
             println("Warning! Still no implementation for $C0, using [1,0,...] instead")
             D0=zeros(Complex,dyn_sts)
@@ -55,10 +62,9 @@ for DYN in DYN_LIST
         else
             D0=C0
         end
-        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0,$D0)"
+        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0,$D0,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     elseif DYN in SH_LIST
-        println(DYN)
         if dyn_sts!=nsts
             println("Warning! Still no implementation for $C0, using [1,0,...] instead")
             D0=zeros(Complex,dyn_sts)
@@ -66,7 +72,7 @@ for DYN in DYN_LIST
         else
             D0=C0
         end
-        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0,$D0,$ast0)"
+        S_string="S_$(DYN)=$(DYN)_state_builder($R0,$p0,$D0,$ast0,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     else
         println("$DYN dynamics are not implemented in the lists, check the types.jl file, in the end, in the META section")

@@ -100,12 +100,12 @@ function single_integration(tf,S::SH_state,flags=100)
 end
 
 
-function wigner_CL_integration(tf,R0,p0,prefix,Ntrajs,flags=100)
+function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=100)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],wigner,Ntrajs)
-    S0=[builder_CL_state(INITIAL[1,i],INITIAL[2,i],prefix) for i in 1:Ntrajs]
+    S0=[builder_CL_state(INITIAL[1,i],INITIAL[2,i],prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)
@@ -127,13 +127,13 @@ function wigner_CL_integration(tf,R0,p0,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC
 end
 
-function wigner_MF_integration(tf,R0,p0,C0,prefix,Ntrajs,flags=100)
+function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=100)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     C_VEC=SharedArray{Complex128}(flags+1,nsts,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],wigner,Ntrajs)
-    S0=[builder_MF_state(INITIAL[1,i],INITIAL[2,i],C0,prefix) for i in 1:Ntrajs]
+    S0=[builder_MF_state(INITIAL[1,i],INITIAL[2,i],C0,prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)
@@ -156,7 +156,7 @@ function wigner_MF_integration(tf,R0,p0,C0,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC,C_VEC
 end
 
-function wigner_SH_integration(tf,R0,p0,C0,ast0,prefix,Ntrajs,flags=100)
+function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=100)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -164,7 +164,7 @@ function wigner_SH_integration(tf,R0,p0,C0,ast0,prefix,Ntrajs,flags=100)
     C_VEC=SharedArray{Complex}(flags+1,tr_sts,Ntrajs)
     AST_VEC=SharedArray{Int64}(flags+1,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],wigner,Ntrajs)
-    S0=[builder_SH_state(INITIAL[1,i],INITIAL[2,i],C0,ast0,prefix) for i in 1:Ntrajs]
+    S0=[builder_SH_state(INITIAL[1,i],INITIAL[2,i],C0,ast0,prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)
@@ -188,7 +188,7 @@ function wigner_SH_integration(tf,R0,p0,C0,ast0,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC,C_VEC,AST_VEC
 end
 
-function dist_CL_integration(tf,R0,p0,prefix,Ntrajs,DIST,flags=100)
+function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=100)
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -196,7 +196,7 @@ function dist_CL_integration(tf,R0,p0,prefix,Ntrajs,DIST,flags=100)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],DIST,Ntrajs)
-    S0=[builder_CL_state(INITIAL[1,i],INITIAL[2,i],prefix) for i in 1:Ntrajs]
+    S0=[builder_CL_state(INITIAL[1,i],INITIAL[2,i],prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)
@@ -218,7 +218,7 @@ function dist_CL_integration(tf,R0,p0,prefix,Ntrajs,DIST,flags=100)
         return TF,R_VEC,P_VEC
 end
 
-function dist_MF_integration(tf,R0,p0,C0,prefix,Ntrajs,DIST,flags=100)
+function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=100)
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -229,7 +229,7 @@ function dist_MF_integration(tf,R0,p0,C0,prefix,Ntrajs,DIST,flags=100)
     C_REAL_VEC=SharedArray{Float64}(flags+1,tr_sts,Ntrajs)
     C_IMAG_VEC=SharedArray{Float64}(flags+1,tr_sts,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],DIST,Ntrajs)
-    S0=[builder_MF_state(INITIAL[1,i],INITIAL[2,i],C0,prefix) for i in 1:Ntrajs]
+    S0=[builder_MF_state(INITIAL[1,i],INITIAL[2,i],C0,prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)
@@ -255,7 +255,7 @@ function dist_MF_integration(tf,R0,p0,C0,prefix,Ntrajs,DIST,flags=100)
         return TF,R_VEC,P_VEC,C_VEC
 end
 
-function dist_SH_integration(tf,R0,p0,C0,ast0,prefix,Ntrajs,DIST,flags=100)
+function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,flags=100)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -264,7 +264,7 @@ function dist_SH_integration(tf,R0,p0,C0,ast0,prefix,Ntrajs,DIST,flags=100)
     C_IMAG_VEC=SharedArray{Float64}(flags+1,tr_sts,Ntrajs)
     AST_VEC=SharedArray{Int64}(flags+1,Ntrajs)
     INITIAL=initial_1D_distribution([R0,p0],DIST,Ntrajs)
-    S0=[builder_SH_state(INITIAL[1,i],INITIAL[2,i],C0,ast0,prefix) for i in 1:Ntrajs]
+    S0=[builder_SH_state(INITIAL[1,i],INITIAL[2,i],C0,ast0,prefix,NDOFs,mem) for i in 1:Ntrajs]
 
     T=collect(0:dt:tf)
     steps=length(T)

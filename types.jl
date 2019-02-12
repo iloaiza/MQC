@@ -6,6 +6,7 @@ struct C_state #classical state, has classical nuclei information
     R
     p
     NDOFs :: Int #number of nuclear (i.e. classical) degrees of freedom, used for scaling towards higher dimensions
+    mem #general variable, can hold anything for memory throughout the dynamics
 end
 
 struct Q_state #quantum state, has all electronic information. used even for classical methods
@@ -21,6 +22,7 @@ struct ODE_state #carries the ODE parameters for runge-kutta integration
     Rdot
     pdot
     Cdot
+    memdot
 end
 
 struct CM2_extra
@@ -154,30 +156,30 @@ end
 
 #CREATE STATE BUILDING FUNCTIONS
 #####   CL  #####
-CL_string="function builder_CL_state(R,p,prefix,NDOFs=length(R));"
+CL_string="function builder_CL_state(R,p,prefix,NDOFs=length(R),mem=0);"
 CL_if_strings=String[]
 
 for DYN in CL_LIST
-    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,NDOFs);  end;    """)
+    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,NDOFs,mem);  end;    """)
 end
 CL_string=CL_string*prod(CL_if_strings)*"return S;  end"
 eval(Meta.parse(CL_string))
 
 #####   MF  #####
-MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R));"
+MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R),mem=0);"
 MF_if_strings=String[]
 
 for DYN in MF_LIST
-    push!(MF_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,Uold,NDOFs);  end;    """)
+    push!(MF_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,Uold,NDOFs,mem);  end;    """)
 end
 MF_string=MF_string*prod(MF_if_strings)*"return S;  end"
 eval(Meta.parse(MF_string))
 ####    SH  #####
-SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R));"
+SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R),mem=0);"
 SH_if_strings=String[]
 
 for DYN in SH_LIST
-    push!(SH_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,ast,Uold,NDOFs);  end;    """)
+    push!(SH_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,ast,Uold,NDOFs,mem);  end;    """)
 end
 SH_string=SH_string*prod(SH_if_strings)*"return S;  end"
 eval(Meta.parse(SH_string))
