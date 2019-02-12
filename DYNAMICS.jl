@@ -59,12 +59,20 @@ println("The initial conditions are")
 @show p0
 @show C0
 @show E0
+
+NDOFs=length(R0)
 println("The dynamics that will be done are:")
 for DYN in DYN_LIST
     dyn_sts=eval(Meta.parse("$(DYN)_sts"))
+    if eval(Meta.parse("@isdefined $(DYN)_mem")) #block for filling memory variable with 0 if it is not defined
+        println("""Using memory of $(DYN)_mem = $("$(DYN)_mem") for $(DYN)""")
+    else
+        eval(Meta.parse("$(DYN)_mem=0"))
+        println("Memory not defined for $(DYN), make sure it's intentional")
+    end
     if DYN in CL_LIST
         println("$DYN CLASSICAL INTEGRATION")
-        S_string="S_$(DYN)=builder_CL_state($R0,$p0,$DYN)"
+        S_string="S_$(DYN)=builder_CL_state($R0,$p0,$DYN,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     elseif DYN in MF_LIST
         println("$DYN MEAN-FIELD INTEGRATION")
@@ -75,7 +83,7 @@ for DYN in DYN_LIST
         else
             D0=C0
         end
-        S_string="S_$(DYN)=builder_MF_state($R0,$p0,$D0,$DYN)"
+        S_string="S_$(DYN)=builder_MF_state($R0,$p0,$D0,$DYN,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     elseif DYN in SH_LIST
         println("$DYN SURFACE HOPPING INTEGRATION")
@@ -86,7 +94,7 @@ for DYN in DYN_LIST
         else
             D0=C0
         end
-        S_string="S_$(DYN)=builder_SH_state($R0,$p0,$D0,$ast0,$DYN)"
+        S_string="S_$(DYN)=builder_SH_state($R0,$p0,$D0,$ast0,$DYN,0,$NDOFs,$(DYN)_mem)"
         eval(Meta.parse(S_string))
     else
         println("$DYN has no implementation, check the list in types.jl in the end section of META")
@@ -103,7 +111,7 @@ for DYN in DYN_LIST
             integ_string="single_integration(tf,S_$(DYN))"
             T,R,P=eval(Meta.parse(integ_string))
         else
-            integ_string="dist_CL_integration($tf,$R0,$p0,$DYN,$Ntrajs,$initial_dist)"
+            integ_string="dist_CL_integration($tf,$R0,$p0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist)"
             Ts,Rs,Ps=eval(Meta.parse(integ_string))
             T=zeros(Float64,size(Ts))
             R=zeros(Float64,size(Rs))
@@ -130,7 +138,7 @@ for DYN in DYN_LIST
             integ_string="single_integration(tf,S_$(DYN))"
             T,R,P=eval(Meta.parse(integ_string))
         else
-            integ_string="dist_MF_integration($tf,$R0,$p0,$D0,$DYN,$Ntrajs,$initial_dist)"
+            integ_string="dist_MF_integration($tf,$R0,$p0,$D0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist)"
             Ts,Rs,Ps,Cs=eval(Meta.parse(integ_string))
             T=zeros(Float64,size(Ts))
             R=zeros(Float64,size(Rs))
@@ -154,7 +162,7 @@ for DYN in DYN_LIST
         else
             D0=C0
         end
-        integ_string="dist_SH_integration($tf,$R0,$p0,$D0,$ast0,$DYN,$Ntrajs,$initial_dist)"
+        integ_string="dist_SH_integration($tf,$R0,$p0,$D0,$ast0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist)"
         Ts,Rs,Ps,Cs,ASTs=eval(Meta.parse(integ_string))
         T=zeros(Float64,size(Ts))
         R=zeros(Float64,size(Rs))
