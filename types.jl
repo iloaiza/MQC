@@ -128,7 +128,7 @@ end
 
 ###################################### TYPES META INFORMATION, UPDATE WHEN ADDING NEW METHOD! #####################
 #ADD NEW METHOD, SPECIFY IF IT'S CLASSICAL, MEAN-FIELD OR SURFACE HOPPING
-#ADD IN TWO POINTS: LIST, NSTS USED
+#ADD IN TWO POINTS: LIST, NSTS USED. CL METHODS DO NOT NEED sts (automatically constructed as 0)
 
 CL_LIST=["BO","FRIC"]
 MF_LIST=["EH","CM2","CM3"]
@@ -142,6 +142,10 @@ FSSH_dia_sts=nsts
 CM2_FSSH_sts=2
 CM3_FSSH_sts=3
 SHEEP_sts=nsts
+
+for dyn in CL_LIST
+    eval(Meta.parse("$(dyn)_sts=0"))
+end
 
 #IMPORT METHOD LISTS INTO METHOD_LIST
 METHOD_LIST=copy(CL_LIST)
