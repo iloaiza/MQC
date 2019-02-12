@@ -4,7 +4,7 @@ Mixed Quantum Classical (MQC) Dynamics
 	Contact: ignacio.loaiza@mail.utoronto.ca
 
 A Julia implementation of some MQC methods for molecular dynamics.
-Includes Ehrenfest Mean-Field (EH), Tully's Fewest Switches Surface Hopping (FSSH)(1) (in both adiabatic and diabatic representations), Collective Modes (with and without surface hopping) (CM2, CM3, CM2_FSSH and CM3_FSSH)(2,3), Surface Hopping in Excited Ehrenfest Potential (SHEEP)(4), Born-Oppenheimer (BO), and Split Operator (SO) exact dynamics for benchmarking.
+Includes Ehrenfest Mean-Field (EH), Tully's Fewest Switches Surface Hopping (FSSH)(1) (in both adiabatic and diabatic representations), Collective Modes (with and without surface hopping) (CM2, CM3, CM2_FSSH and CM3_FSSH)(2,3), Surface Hopping in Excited Ehrenfest Potential (SHEEP)(4), Born-Oppenheimer (BO), and Split Operator (SO) exact dynamics for benchmarking. Now also includes friction with memory (FRIC)(2,5).
 
 
 Supports parallelization in 1 node.
@@ -32,3 +32,5 @@ References.
 	(3) - I. Loaiza, I. G. Ryabinkin, and A. F. Izmaylov, under preparation.
 
 	(4) - S. A. Fischer, C. T. Chapman, and X. Li, Surface hopping with Ehrenfest excited potential. J. Chem. Phys., 135, 144102 (2011).
+
+	(5) - M. Head-Gordon, J. C. Tully, Molecular dynamics with electronic frictions. J. Chem. Phys. 103, 23 (1990).
