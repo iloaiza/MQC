@@ -46,7 +46,8 @@ for DYN in DYN_LIST
     println(DYN)
     dyn_sts=eval(Meta.parse("$(DYN)_sts"))
     if eval(Meta.parse("@isdefined $(DYN)_mem")) #block for filling memory variable with 0 if it is not defined
-        println("""Using memory of $(DYN)_mem = $("$(DYN)_mem") for $(DYN)""")
+        eval(Meta.parse("mem=$(DYN)_mem"))
+        println("""Using memory $(DYN)_mem = $(mem)""")
     else
         eval(Meta.parse("$(DYN)_mem=0"))
         println("Memory not defined for $(DYN), make sure it's intentional")
