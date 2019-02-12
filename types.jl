@@ -8,7 +8,7 @@ struct C_state #classical state, has classical nuclei information
     NDOFs :: Int #number of nuclear (i.e. classical) degrees of freedom, used for scaling towards higher dimensions
 end
 
-struct Q_state #quantum state, has all electronic information
+struct Q_state #quantum state, has all electronic information. used even for classical methods
     C
     E
     W
@@ -117,6 +117,12 @@ struct SHEEP_state <: SH_state
     prefix :: String
 end
 
+struct FRIC_state <: CL_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    prefix :: String
+end
 
 ###################################### TYPES META INFORMATION, UPDATE WHEN ADDING NEW METHOD! #####################
 #ADD NEW METHOD, SPECIFY IF IT'S CLASSICAL, MEAN-FIELD OR SURFACE HOPPING
@@ -126,10 +132,6 @@ CL_LIST=["BO"]
 MF_LIST=["EH","CM2","CM3"]
 SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP"]
 
-METHOD_LIST=copy(CL_LIST)
-append!(METHOD_LIST,MF_LIST)
-append!(METHOD_LIST,SH_LIST)
-
 EH_sts=nsts
 CM2_sts=2
 CM3_sts=3
@@ -138,6 +140,11 @@ FSSH_dia_sts=nsts
 CM2_FSSH_sts=2
 CM3_FSSH_sts=3
 SHEEP_sts=nsts
+
+#IMPORT METHOD LISTS INTO METHOD_LIST
+METHOD_LIST=copy(CL_LIST)
+append!(METHOD_LIST,MF_LIST)
+append!(METHOD_LIST,SH_LIST)
 
 #ASIGN DYN VARIABLE "DYN" VALUE, USEFUL FOR META PROGRAMING IN DYNAMICAL CODE
 for (i,DYN) in enumerate(METHOD_LIST)
@@ -186,7 +193,7 @@ eval(Meta.parse(SH_string))
 
 2: ADD THE TYPE, MAKING SURE TO MARK THE FAMILY IT BELONGS TO (E.G. STRUCT NEW_MF_state <:MF_state)
 
-3: ADD THE NUMBER OF ELECTRONIC STATES IT USES NAMED AS DYN_sts
+3: ADD THE NUMBER OF ELECTRONIC STATES IT USES NAMED AS DYN_sts IF IT'S NOT A CLASSICAL METHOD
 
 4: ADD THE TYPE CONSTRUCTOR IN TYPE_BUILDER, MAKE SURE TO KNOW WHAT'S THE DEFAULT ENTRY FOR FAMILY. FOR THIS, YOU WILL NEED:
     -THE ODE INFORMATION (GOES IN ODE OBJECT!)

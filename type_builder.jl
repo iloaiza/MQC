@@ -261,7 +261,27 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R)) #Uold reresents t
     return SHEEP_state(cl,el,ODE,ast,"SHEEP")
 end
 
+#IMPLEMENTATION UNDER WAY!!
+function FRIC_state_builder(R,p,NDOFs=length(R))    #this is markovian friction with no memory!!
+    cl=C_state_builder(R,p,NDOFs)
+    el=Q_state_builder(0,R,0,NDOFs)
 
+    pdot=zeros(NDOFs)
+    γ=zeros(NDOFs,NDOFs)
+    for α in 1:NDOFs
+        for ν in 1:NDOFs
+            γ[α,ν]=2*sum([el.Γ[α][1,j]*el.Γ[ν][1,j]*el.W[j,1] for j in 2:nsts])
+        end
+    end
+
+
+    for k in 1:NDOFs
+        pdot[k].=-el.F[k][1]-mass*sum([γ[k,α]*p[α] for α in 1:NDOFs])
+    end
+    ODE=ODE_state(p/mass,pdot,0)
+
+    return BO_state(cl,el,ODE,"BO")
+end
 
 ################################################################################
 
