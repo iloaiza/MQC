@@ -137,7 +137,7 @@ for DYN in DYN_LIST
         if initial_dist==constant_dist
             println("Constant distribution: only one propagation needed for mean-field methods")
             integ_string="single_integration(tf,S_$(DYN))"
-            T,R,P=eval(Meta.parse(integ_string))
+            T,R,P,C=eval(Meta.parse(integ_string))
         else
             integ_string="dist_MF_integration($tf,$R0,$p0,$D0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist)"
             Ts,Rs,Ps,Cs=eval(Meta.parse(integ_string))
