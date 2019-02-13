@@ -105,6 +105,24 @@ struct CM3_FSSH_state <: SH_state
     prefix :: String
 end
 
+struct CM2_FSSH_FRIC_state <: SH_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    CM2 :: CM2_extra
+    ast :: Int
+    prefix :: String
+end
+
+struct CM3_FSSH_FRIC_state <: SH_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    CM3 :: CM3_extra
+    ast :: Int
+    prefix :: String
+end
+
 
 #A CONSTANT NAMED SHEEP_REL MUST BE DEFINED, WITH ARRAYS OF THE STATES THAT GO TOGETHER:
 #DEFAULT IS GROUND-STATE - EVERYTHING ELSE MUST BE ADDED HERE
@@ -132,7 +150,7 @@ end
 
 CL_LIST=["BO","FRIC"]
 MF_LIST=["EH","CM2","CM3"]
-SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP"]
+SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP","CM2_FSSH_FRIC","CM3_FSSH_FRIC"]
 
 EH_sts=nsts
 CM2_sts=2
@@ -141,6 +159,8 @@ FSSH_sts=nsts
 FSSH_dia_sts=nsts
 CM2_FSSH_sts=2
 CM3_FSSH_sts=3
+CM2_FSSH_FRIC_sts=2
+CM3_FSSH_FRIC_sts=3
 SHEEP_sts=nsts
 
 for dyn in CL_LIST

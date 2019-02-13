@@ -52,7 +52,7 @@ function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR1,dp1,dC1,dmem1=diff_eq(S)
     kR1=δt*dR1
     kp1=δt*dp1
-    kC1=δt*dC1
+    kC1=δt*dC1*S.el.C
     kmem1=δt*dmem1
 
     R2=R0+kR1/2
@@ -63,7 +63,7 @@ function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR2,dp2,dC2,dmem2=diff_eq(S)
     kR2=δt*dR2
     kp2=δt*dp2
-    kC2=δt*dC2
+    kC2=δt*dC2*S.el.C
     kmem2=δt*dmem2
 
     R3=R0+kR2/2
@@ -74,7 +74,7 @@ function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR3,dp3,dC3,dmem3=diff_eq(S)
     kR3=δt*dR3
     kp3=δt*dp3
-    kC3=δt*dC3
+    kC3=δt*dC3*S.el.C
     kmem3=δt*dmem3
 
     R4=R0+kR3
@@ -85,7 +85,7 @@ function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR4,dp4,dC4,dmem4=diff_eq(S)
     kR4=δt*dR4
     kp4=δt*dp4
-    kC4=δt*dC4
+    kC4=δt*dC4*S.el.C
     kmem4=δt*dmem4
 
     Rnew=R0+kR1/6+kR2/3+kR3/3+kR4/6
@@ -105,7 +105,7 @@ function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR1,dp1,dC1,dmem1=diff_eq(S)
     kR1=δt*dR1
     kp1=δt*dp1
-    kC1=δt*dC1
+    kC1=δt*dC1*S.el.C
     kmem1=δt*dmem1
 
     R2=R0+kR1/2
@@ -116,7 +116,7 @@ function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR2,dp2,dC2,dmem2=diff_eq(S)
     kR2=δt*dR2
     kp2=δt*dp2
-    kC2=δt*dC2
+    kC2=δt*dC2*S.el.C
     kmem2=δt*dmem2
 
     R3=R0+kR2/2
@@ -127,7 +127,7 @@ function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR3,dp3,dC3,dmem3=diff_eq(S)
     kR3=δt*dR3
     kp3=δt*dp3
-    kC3=δt*dC3
+    kC3=δt*dC3*S.el.C
     kmem3=δt*dmem3
 
     R4=R0+kR3
@@ -138,7 +138,7 @@ function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
     dR4,dp4,dC4,dmem4=diff_eq(S)
     kR4=δt*dR4
     kp4=δt*dp4
-    kC4=δt*dC4
+    kC4=δt*dC4*S.el.C
     kmem4=δt*dmem4
 
     Rnew=R0+kR1/6+kR2/3+kR3/3+kR4/6

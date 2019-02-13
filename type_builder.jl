@@ -77,7 +77,7 @@ function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents th
         pdot[k]=-real(el.C'*el.F[k]*el.C)[1]
     end
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
-    ODE=ODE_state(p/mass,pdot,Cdot*C,0)
+    ODE=ODE_state(p/mass,pdot,Cdot,0)
 
     return EH_state(cl,el,ODE,"EH")
 end
@@ -92,7 +92,7 @@ function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold rerese
         pdot[k]=-el.F[k][ast,ast]
     end
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
-    ODE=ODE_state(p/mass,pdot,Cdot*C,0)
+    ODE=ODE_state(p/mass,pdot,Cdot,0)
 
     return FSSH_state(cl,el,ODE,ast,"FSSH")
 end
@@ -124,7 +124,7 @@ function FSSH_dia_state_builder(R,p,C,ast=1,NDOFs=length(R),mem=0,first=false)
     for k in 1:NDOFs
         pdot[k]=-dV[k][ast,ast]
     end
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return FSSH_dia_state(cl,el,ODE,ast,"FSSH_dia")
 end
@@ -163,7 +163,7 @@ function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents t
     for k in 1:NDOFs
         pdot[k]=-real(el.C'*F2[k]*el.C)[1]
     end
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return CM2_state(cl,el,ODE,CM2,"CM2")
 end
@@ -194,7 +194,7 @@ function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents t
     for k in 1:NDOFs
         pdot[k]=-real(C'*F3[k]*C)[1]
     end
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
 
     return CM3_state(cl,el,ODE,CM3,"CM3")
@@ -213,7 +213,7 @@ function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold re
     for k in 1:NDOFs
         pdot[k]=-el.F[k][1]
     end
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return CM2_FSSH_state(cl,el,ODE,CM2,ast,"CM2_FSSH")
 end
@@ -232,9 +232,144 @@ function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold re
     for k in 1:NDOFs
         pdot[k]=-el.F[k][1]
     end
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return CM3_FSSH_state(cl,el,ODE,CM3,ast,"CM3_FSSH")
+end
+
+function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+    cl=C_state_builder(R,p,NDOFs,mem)
+    el=Q_state_builder(C,R,Uold,NDOFs)
+    CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
+
+    Weff=sum(CM2.wvec.*(CM2.tnorm.^2))
+    Cdot=[0 -CM2.z;CM2.z 1im*Weff]
+
+    Rdot=p/mass
+    pdot=zeros(NDOFs)
+
+    E_k=zeros(nsts-2)
+    F_k=zeros(nsts-2)
+    if mem==0 #first run, initialize ek's and fk's
+        mem=zeros(2*(nsts-2))
+        cl.mem=mem
+    else
+        for i in 1:nsts-2 #could be defined more simply just as zeros, but construction is shown for future reference
+            E_k[i]=mem[i]
+            F_k[i]=mem[i+nsts-2]
+        end
+    end
+
+    TAU=CM2.tnorm.*CM2.z
+    E_kdot=zeros(nsts-2)
+    F_kdot=zeros(nsts-2)
+    memdot=zeros(2*(nsts-2))
+    for i in 1:nsts-2
+        E_kdot[i]=TAU[i+1]*CM2.wvec[i+1]*abs2(C[2])-CM2.wvec[i+1]*F_k[i]
+        F_kdot[i]=CM2.wvec[i+1]*E_k[i]
+        memdot[i]=E_kdot[i]
+        memdot[i+nsts-2]=F_kdot[i]
+    end
+
+    U=zeros(nsts,nsts)
+    U[1,1]=1
+    for i in 1:nsts-1
+        U[2,i+1]=CM2.tnorm[i]
+        U[i+1,2]=U[2,i+1]
+    end
+    for i in 3:nsts
+        U[i,i]=-CM2.tnorm[1]
+    end
+    Udag=U'
+
+    G=zeros(nsts,nsts,NDOFs)
+    for dof in 1:NDOFs
+        G[:,:,NDOFs]=Udag*el.Γ[dof]*U
+    end
+
+
+    for k in 1:NDOFs
+        pdot[k]=-el.F[k][1]
+        for st in 1:nsts-2
+            pdot[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
+        end
+    end
+    ODE=ODE_state(Rdot,pdot,Cdot,memdot)
+
+    return CM2_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM2_FSSH_FRIC")
+end
+
+function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+    cl=C_state_builder(R,p,NDOFs,mem)
+    el=Q_state_builder(C,R,Uold,NDOFs)
+    CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
+
+    barW=sum(CM3.wvec.*(CM3.tnorm.^2))
+    barW2=sum(CM3.wvec2.*(CM3.tnorm2.^2))
+    Cdot=[0 -CM3.z 0;CM3.z 1im*barW -1im*CM3.zbar;0 -1im*CM3.zbar 1im*barW2]
+
+    Rdot=p/mass
+    pdot=zeros(NDOFs)
+
+    E_k=zeros(nsts-3)
+    F_k=zeros(nsts-3)
+    if mem==0 #first run, initialize ek's and fk's
+        mem=zeros(2*(nsts-3))
+    else
+        for i in 1:nsts-3 #could be defined more simply just as zeros, but construction is shown for future reference
+            E_k[i]=mem[i]
+            F_k[i]=mem[i+nsts-3]
+        end
+    end
+
+    TAU=CM3.tnorm2.*CM3.zbar
+    E_kdot=zeros(nsts-3)
+    F_kdot=zeros(nsts-3)
+    memdot=zeros(2*(nsts-3))
+    for i in 1:nsts-3
+        E_kdot[i]=TAU[i+1]*CM3.wvec2[i+1]*abs2(C[3])-CM3.wvec[i+1]*F_k[i]
+        F_kdot[i]=CM3.wvec2[i+1]*E_k[i]
+        memdot[i]=E_kdot[i]
+        memdot[i+nsts-3]=F_kdot[i]
+    end
+
+    U2=zeros(nsts,nsts)
+    U3=zeros(nsts,nsts)
+    U2[1,1]=1
+    for i in 1:nsts-1
+        U2[2,i+1]=CM3.tnorm[i]
+        U2[i+1,2]=U2[2,i+1]
+    end
+    for i in 3:nsts
+        U2[i,i]=-CM3.tnorm[1]
+    end
+    U3[1,1]=CM3.zbar
+    U3[2,2]=1
+    for i in 1:nsts-2
+        U3[3,i+2]=CM3.tnorm2[i]
+        U3[i+2,3]=U3[3,i+2]
+    end
+    for i in 4:nsts
+        U3[i,i]=-CM3.tnorm2[1]
+    end
+    U=U2*U3
+    Udag=U'
+
+    G=zeros(nsts,nsts,NDOFs)
+    for dof in 1:NDOFs
+        G[:,:,NDOFs]=Udag*el.Γ[dof]*U
+    end
+
+    for k in 1:NDOFs
+        pdot[k]=-el.F[k][1]
+        for st in 1:nsts-3
+            pdot[k]+=-2*G[st+3,2,k]*E_k[st]*abs(C[3])
+        end
+    end
+
+    ODE=ODE_state(Rdot,pdot,Cdot,memdot)
+
+    return CM3_FSSH_FRIC_state(cl,el,ODE,CM3,ast,"CM3_FSSH_FRIC")
 end
 
 function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
@@ -256,7 +391,7 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reres
 
     Rdot=p/mass
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
-    ODE=ODE_state(Rdot,pdot,Cdot*C,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return SHEEP_state(cl,el,ODE,ast,"SHEEP")
 end
