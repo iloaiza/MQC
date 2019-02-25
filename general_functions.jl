@@ -94,6 +94,7 @@ function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
     plotting_X=range(Xarr[1]+xstep/2,stop=Xarr[end]-xstep/2,length=nx)
     plotting_Y=range(Yarr[1]+ystep/2,stop=Yarr[end]-ystep/2,length=ny)
     H=zeros(nx,ny)
+    OOB_COUNT=0
 
     for x in X
         for y in Y
@@ -103,9 +104,15 @@ function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
             jy=Int(floor(y_diff/ystep))+1
             if jx<1 || jy<1 || jx>nx || jy>ny
                 println("Error: out of bounds for x=$x, y=$y.")
+                OOB_COUNT+=1
+            else
+                H[jx,jy]+=1
             end
-            H[jx,jy]+=1
         end
+    end
+
+    if OOB_COUNT>0
+        println("Total number of out of bounds trajectories: $OOB_COUNT")
     end
 
     return [plotting_X,plotting_Y],H
