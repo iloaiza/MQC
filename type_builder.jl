@@ -4,9 +4,9 @@ function phase_tracker(Uold,Ua)
     else
         phase=round.(Int,Diagonal(Ua'*Uold)[diagind(Ua)])
             if  prod(abs.(phase))!=1
-            println("Warning, not al phases are +-1")# at position")
+            #println("Warning, not al phases are +-1")# at position")
             #@show R
-            println("Using sign phases instead of round. Consider changing timestep if warning is repeated many times...")
+            #println("Using sign phases instead of round. Consider changing timestep if warning is repeated many times...")
             phase=sign.(Diagonal(Ua'*Uold)[diagind(Ua)])
             if prod(phase)==0
                 println("Second warning: the phase sign has a zero, resetting phase on those values")
