@@ -101,6 +101,9 @@ function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
             y_diff=y-ymin
             jx=Int(floor(x_diff/xstep))+1
             jy=Int(floor(y_diff/ystep))+1
+            if jx<1 || jy<1 || jx>nx || jy>ny
+                println("Error: out of bounds for x=$x, y=$y.")
+            end
             H[jx,jy]+=1
         end
     end
