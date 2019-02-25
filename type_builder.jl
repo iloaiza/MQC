@@ -252,7 +252,7 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
     F_k=zeros(nsts-2)
     if mem==0 #first run, initialize ek's and fk's
         mem=zeros(2*(nsts-2))
-        cl.mem=mem
+        cl=C_state_builder(R,p,NDOFs,mem)
     else
         for i in 1:nsts-2 #could be defined more simply just as zeros, but construction is shown for future reference
             E_k[i]=mem[i]
@@ -315,6 +315,7 @@ function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
     F_k=zeros(nsts-3)
     if mem==0 #first run, initialize ek's and fk's
         mem=zeros(2*(nsts-3))
+        cl=C_state_builder(R,p,NDOFs,mem)
     else
         for i in 1:nsts-3 #could be defined more simply just as zeros, but construction is shown for future reference
             E_k[i]=mem[i]
