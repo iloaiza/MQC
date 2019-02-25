@@ -77,7 +77,7 @@ function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents th
         pdot[k]=-real(el.C'*el.F[k]*el.C)[1]
     end
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
-    ODE=ODE_state(p/mass,pdot,Cdot,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return EH_state(cl,el,ODE,"EH")
 end
@@ -92,7 +92,7 @@ function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold rerese
         pdot[k]=-el.F[k][ast,ast]
     end
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
-    ODE=ODE_state(p/mass,pdot,Cdot,0)
+    ODE=ODE_state(Rdot,pdot,Cdot,0)
 
     return FSSH_state(cl,el,ODE,ast,"FSSH")
 end
