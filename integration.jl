@@ -1,4 +1,4 @@
-function single_integration(tf,S::CL_state,flags=100)
+function single_integration(tf,S::CL_state,flags=100,tol=1e-3)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -7,6 +7,7 @@ function single_integration(tf,S::CL_state,flags=100)
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
+    E0 = S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
 
     counter=2
     Rvec[1,:].=S.cl.R
@@ -17,6 +18,15 @@ function single_integration(tf,S::CL_state,flags=100)
             Rvec[counter,:].=S.cl.R
             pvec[counter,:].=S.cl.p
             counter+=1
+            E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+            dE = abs(E-E0)/abs(E0)
+            if dE>tol
+                println("Warning: energy conservation being violated beyond tolerance $tol")
+                @show S.cl
+                @show E
+                @show E0
+                @show dE
+            end
         end
     end
     Rvec[end,:].=S.cl.R
@@ -24,7 +34,7 @@ function single_integration(tf,S::CL_state,flags=100)
     return Tf,Rvec,pvec
 end
 
-function single_integration(tf,S::MF_state,flags=100)
+function single_integration(tf,S::MF_state,flags=100,tol=1e-3)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -36,11 +46,13 @@ function single_integration(tf,S::MF_state,flags=100)
     tr_sts=length(S.el.C) #number of electronic states that will be tracked over te dynamics
     C=zeros(Complex,flags+1,tr_sts)
 
+    E0 = sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+
     counter=2
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
     C[1,:].=S.el.C
-    #t00=time()
+    #t00=time() #uncomment for printing debug mode
     for i in 2:steps
         S=runge_step(S)
         if Tf[counter]==T[i]
@@ -48,9 +60,27 @@ function single_integration(tf,S::MF_state,flags=100)
             pvec[counter,:].=S.cl.p
             C[counter,:].=S.el.C
             counter+=1
+
+            #sanity check subroutine
+            E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+            dE=abs(E-E0)/abs(E0)
+            Cnorm=sum(abs2.(S.el.C))
+            dnorm = abs(1-Cnorm)
+            if dE > tol || dnorm > tol
+                println("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+                @show S.cl
+                @show Cnorm
+                @show E
+                @show E0
+                @show dE
+            end
             #= Uncomment comment line for printing debug mode
             @show T[i]
             @show S.cl.R
+            E_pot = sum(abs2.(S.el.C).*S.el.E)
+            E_kin = S.cl.p^2/2/mass
+            @show E_pot+E_kin
+            @show sum(abs2.(S.el.C))
             println("Time since last check: $(round(time()-t00,digits=3))")
             t00=time()
             ## =#
@@ -62,7 +92,7 @@ function single_integration(tf,S::MF_state,flags=100)
     return Tf,Rvec,pvec,C
 end
 
-function single_integration(tf,S::SH_state,flags=100)
+function single_integration(tf,S::SH_state,flags=100,tol=1e-3)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -75,11 +105,14 @@ function single_integration(tf,S::SH_state,flags=100)
     C=zeros(Complex,flags+1,tr_sts)
     Ast=zeros(Int,flags+1)
 
+    E0 = S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+
     counter=2
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
     C[1,:].=S.el.C
     Ast[1]=S.ast
+    #t00=time() #uncomment for printing debug mode
     for i in 2:steps
         S=runge_step(S)
         S=hop!(S)
@@ -89,6 +122,30 @@ function single_integration(tf,S::SH_state,flags=100)
             C[counter,:].=S.el.C
             Ast[counter]=S.ast
             counter+=1
+
+            #sanity check subroutine
+            E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+            dE=abs(E-E0)/abs(E0)
+            Cnorm=sum(abs2.(S.el.C))
+            dnorm = abs(1-Cnorm)
+            if dE > tol || dnorm > tol
+                println("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+                @show S.cl
+                @show Cnorm
+                @show E
+                @show E0
+                @show dE
+            end
+            #= Uncomment comment line for printing debug mode
+            @show T[i]
+            @show S.cl.R
+            E_pot = S.el.E[S.ast]
+            E_kin = S.cl.p^2/2/mass
+            @show E_pot+E_kin
+            @show sum(abs2.(S.el.C))
+            println("Time since last check: $(round(time()-t00,digits=3))")
+            t00=time()
+            ## =#
         end
     end
     Rvec[end,:].=S.cl.R
