@@ -50,9 +50,9 @@ function all_4_1D_plot(xmin,xmax,res,basest=1,targetsts=2)
     R[:,1].=BASE
     C=zeros(nsts)
     C[1]=1
-    S=EH_state(xmin,0,C)
+    S=EH_state_builder(xmin,0,C)
     for i in 1:res
-        S=EH_state(R[i,1],0,C,S.el.Ua)
+        S=EH_state_builder(R[i,1],0,C,S.el.Ua)
         R[i,2:nsts+1].=S.el.E
         R[i,nsts+2:end].=S.el.Γ[1][basest,targetsts]
     end
@@ -65,10 +65,10 @@ function couplings_4_plot(R,basest=1,targetst=2)
     COUPLINGS=[zeros(size(R)) for i in 1:ntargets]
     C=zeros(nsts)
     C[1]=1
-    S=EH_state(R[1],0,C)
+    S=EH_state_builder(R[1],0,C)
 
     for (i,q) in enumerate(R)
-        S=EH_state(q,0,C,S.el.Ua)
+        S=EH_state_builder(q,0,C,S.el.Ua)
         for (ntar,tst) in enumerate(targetst)
             COUPLINGS[ntar][i]=S.el.Γ[1][basest,tst]
         end
