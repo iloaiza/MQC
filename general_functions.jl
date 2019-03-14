@@ -96,14 +96,16 @@ function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
     H=zeros(nx,ny)
     OOB_COUNT=0
 
-    for x in X
-        for y in Y
+    for ix in 1:nx
+        for iy in 1:ny
+            x=X[ix]
+            y=Y[iy]
             x_diff=x-xmin
             y_diff=y-ymin
             jx=Int(floor(x_diff/xstep))+1
             jy=Int(floor(y_diff/ystep))+1
             if jx<1 || jy<1 || jx>nx || jy>ny
-                println("Error: out of bounds for x=$x, y=$y.")
+                #println("Error: out of bounds for x=$x, y=$y.")
                 OOB_COUNT+=1
             else
                 H[jx,jy]+=1
