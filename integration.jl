@@ -357,6 +357,7 @@ end
 
 function single_distance_integration(R_min,S::CL_state,tmax=10000)
     tf=0
+    E0=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -369,6 +370,17 @@ function single_distance_integration(R_min,S::CL_state,tmax=10000)
         end
     else
         error("R_min is neither a number nor an interval!")
+    end
+
+    #sanity check subroutine
+    E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+    dE=abs(E-E0)/abs(E0)
+    if dE > tol
+        @show S.cl
+        @show E
+        @show E0
+        @show dE
+        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
     end
 
     return tf,S
@@ -376,6 +388,7 @@ end
 
 function single_distance_integration(R_min,S::MF_state,tmax=10000)
     tf=0
+    E0=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -390,11 +403,26 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
         error("R_min is neither a number nor an interval!")
     end
 
+    #sanity check subroutine
+    E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+    dE=abs(E-E0)/abs(E0)
+    Cnorm=sum(abs2.(S.el.C))
+    dnorm = abs(1-Cnorm)
+    if dE > tol || dnorm > tol
+        @show S.cl
+        @show Cnorm
+        @show E
+        @show E0
+        @show dE
+        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    end
+
     return tf,S
 end
 
 function single_distance_integration(R_min,S::SH_state,tmax=10000)
     tf=0
+    E0=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -414,6 +442,21 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
     if tf==tmax
         println("Warning! This trajectory was ended due to time limit")
     end
+
+    #sanity check subroutine
+    E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+    dE=abs(E-E0)/abs(E0)
+    Cnorm=sum(abs2.(S.el.C))
+    dnorm = abs(1-Cnorm)
+    if dE > tol || dnorm > tol
+        @show S.cl
+        @show Cnorm
+        @show E
+        @show E0
+        @show dE
+        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    end
+
     return tf,S
 end
 
