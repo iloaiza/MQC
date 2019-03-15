@@ -18,19 +18,22 @@ function single_integration(tf,S::CL_state,flags=100,tol=1e-3)
             Rvec[counter,:].=S.cl.R
             pvec[counter,:].=S.cl.p
             counter+=1
-            E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
-            dE = abs(E-E0)/abs(E0)
-            if dE>tol
-                println("Warning: energy conservation being violated beyond tolerance $tol")
-                @show S.cl
-                @show E
-                @show E0
-                @show dE
-            end
         end
     end
     Rvec[end,:].=S.cl.R
     pvec[end,:].=S.cl.p
+
+    #sanity check subroutine
+    E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+    dE = abs(E-E0)/abs(E0)
+    if dE>tol
+        @show S.cl
+        @show E
+        @show E0
+        @show dE
+        error("Warning: energy conservation being violated beyond tolerance $tol")
+    end
+
     return Tf,Rvec,pvec
 end
 
@@ -60,20 +63,6 @@ function single_integration(tf,S::MF_state,flags=100,tol=1e-3)
             pvec[counter,:].=S.cl.p
             C[counter,:].=S.el.C
             counter+=1
-
-            #sanity check subroutine
-            E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
-            dE=abs(E-E0)/abs(E0)
-            Cnorm=sum(abs2.(S.el.C))
-            dnorm = abs(1-Cnorm)
-            if dE > tol || dnorm > tol
-                println("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-                @show S.cl
-                @show Cnorm
-                @show E
-                @show E0
-                @show dE
-            end
             #= Uncomment comment line for printing debug mode
             @show T[i]
             @show S.cl.R
@@ -89,6 +78,21 @@ function single_integration(tf,S::MF_state,flags=100,tol=1e-3)
     Rvec[end,:].=S.cl.R
     pvec[end,:].=S.cl.p
     C[end,:].=S.el.C
+
+    #sanity check subroutine
+    E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+    dE=abs(E-E0)/abs(E0)
+    Cnorm=sum(abs2.(S.el.C))
+    dnorm = abs(1-Cnorm)
+    if dE > tol || dnorm > tol
+        @show S.cl
+        @show Cnorm
+        @show E
+        @show E0
+        @show dE
+        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    end
+
     return Tf,Rvec,pvec,C
 end
 
@@ -122,20 +126,6 @@ function single_integration(tf,S::SH_state,flags=100,tol=1e-3)
             C[counter,:].=S.el.C
             Ast[counter]=S.ast
             counter+=1
-
-            #sanity check subroutine
-            E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
-            dE=abs(E-E0)/abs(E0)
-            Cnorm=sum(abs2.(S.el.C))
-            dnorm = abs(1-Cnorm)
-            if dE > tol || dnorm > tol
-                println("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-                @show S.cl
-                @show Cnorm
-                @show E
-                @show E0
-                @show dE
-            end
             #= Uncomment comment line for printing debug mode
             @show T[i]
             @show S.cl.R
@@ -152,6 +142,20 @@ function single_integration(tf,S::SH_state,flags=100,tol=1e-3)
     pvec[end,:].=S.cl.p
     C[end,:].=S.el.C
     Ast[end]=S.ast
+
+    #sanity check subroutine
+    E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+    dE=abs(E-E0)/abs(E0)
+    Cnorm=sum(abs2.(S.el.C))
+    dnorm = abs(1-Cnorm)
+    if dE > tol || dnorm > tol
+        @show S.cl
+        @show Cnorm
+        @show E
+        @show E0
+        @show dE
+        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    end
 
     return Tf,Rvec,pvec,C,Ast
 end
