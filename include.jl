@@ -4,6 +4,7 @@ using LinearAlgebra
 using HDF5
 using Distributions
 
+include("code_config.jl")
 include("general_functions.jl")
 include("potentials.jl")
 include("types.jl")

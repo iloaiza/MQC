@@ -1,4 +1,4 @@
-function single_integration(tf,S::CL_state,flags=100,tol=1e-3)
+function single_integration(tf,S::CL_state,flags=100)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -37,7 +37,7 @@ function single_integration(tf,S::CL_state,flags=100,tol=1e-3)
     return Tf,Rvec,pvec
 end
 
-function single_integration(tf,S::MF_state,flags=100,tol=1e-3)
+function single_integration(tf,S::MF_state,flags=100)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -96,7 +96,7 @@ function single_integration(tf,S::MF_state,flags=100,tol=1e-3)
     return Tf,Rvec,pvec,C
 end
 
-function single_integration(tf,S::SH_state,flags=100,tol=1e-3)
+function single_integration(tf,S::SH_state,flags=100)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -416,6 +416,11 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
         @show dE
         error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
     end
+
+    @show Cnorm
+    @show E
+    @show E0
+    @show dE
 
     return tf,S
 end
