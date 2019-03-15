@@ -417,11 +417,6 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
         error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
     end
 
-    @show Cnorm
-    @show E
-    @show E0
-    @show dE
-
     return tf,S
 end
 
