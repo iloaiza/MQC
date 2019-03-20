@@ -93,6 +93,15 @@ function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
     Cnew=C0+kC1/6+kC2/3+kC3/3+kC4/6
     memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
 
+    if norm_fixer
+        if abs(sum(abs2.(Cnew))-1)>tol
+            println("Norm starting to break for...")
+            @show R0
+            @show p0
+            @show C0
+        end
+    end
+
     return builder_MF_state(Rnew,pnew,Cnew,S.prefix,S.el.Ua,NDOFs,memnew)
 end
 
@@ -145,6 +154,18 @@ function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
     pnew=p0+kp1/6+kp2/3+kp3/3+kp4/6
     Cnew=C0+kC1/6+kC2/3+kC3/3+kC4/6
     memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
+
+    if norm_fixer
+        if abs(sum(abs2.(Cnew))-1)>tol
+            println("Norm starting to break for...")
+            @show R0
+            @show p0
+            @show sum(abs2.(C0))
+            @show sum(abs2.(Cnew))
+            @show S.ast
+            Cnew=Cnew/sqrt(sum(abs2.(Cnew)))
+        end
+    end
 
     return builder_SH_state(Rnew,pnew,Cnew,S.ast,S.prefix,S.el.Ua,NDOFs,memnew)
 end

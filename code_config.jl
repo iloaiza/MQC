@@ -3,3 +3,5 @@ const print_phase = false #make true to print warnings when phase is being used 
 
 const sanity_checks = true #will perform sanity checks by the end of every trajectory, comparing energy change and norm change
 #to the defined tol
+
+const norm_fixer = true #will renormalize norm every timestep if beyond tol and print a warning. Activate at your own risk
