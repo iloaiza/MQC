@@ -419,7 +419,7 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markov
     Rdot=p/mass
     E_kdot=zeros(nsts-1)
     F_kdot=zeros(nsts-1)
-    memdot=zeros(2*(nsts-1))
+    memdot=zeros(2*(nsts-1)+1)
     for i in 1:nsts-1
         E_kdot[i]=sum(Rdot.*el.Γ)[i+1,1]*el.W[i+1,1]-el.W[i+1,1]*F_k[i]
         F_kdot[i]=el.W[i+1,1]*E_k[i]
@@ -427,14 +427,16 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markov
         memdot[i+nsts-1]=F_kdot[i]
     end
 
-
+    pdot_fric=zeros(NDOFs)
     for k in 1:NDOFs
         pdot[k]=-el.F[k][1]
         for st in 1:nsts-1
-            pdot[k]+=-2*el.Γ[k][st+1,1]*E_k[st]
+            fric=-2*el.Γ[k][st+1,1]*E_k[st]
+            pdot_fric[k]+=fric
+            pdot[k]+=fric
         end
     end
-    memdot[end] = sum(p.*pdot)/mass
+    memdot[end] = sum(p.*pdot_fric)/mass
     ODE=ODE_state(Rdot,pdot,0,memdot)
 
     return FRIC_state(cl,el,ODE,"FRIC")
