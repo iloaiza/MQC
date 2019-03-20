@@ -399,7 +399,6 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reres
     return SHEEP_state(cl,el,ODE,ast,"SHEEP")
 end
 
-#IMPLEMENTATION UNDER WAY!!
 function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markovian friction with no memory!!
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,Uold,NDOFs)
@@ -409,7 +408,7 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markov
     E_k=zeros(nsts-1)
     F_k=zeros(nsts-1)
     if mem==0 #first run, initialize ek's and fk's
-        mem=zeros(2*(nsts-1))
+        mem=zeros(2*(nsts-1)+1) #last memory entrance will track lost energy due to friction
     else
         for i in 1:nsts-1 #could be defined more simply just as zeros, but construction is shown for future reference
             E_k[i]=mem[i]
@@ -435,6 +434,7 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markov
             pdot[k]+=-2*el.Γ[k][st+1,1]*E_k[st]
         end
     end
+    memdot[end] = sum(p.*pdot)/mass
     ODE=ODE_state(Rdot,pdot,0,memdot)
 
     return FRIC_state(cl,el,ODE,"FRIC")
