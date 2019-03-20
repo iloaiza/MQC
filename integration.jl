@@ -7,7 +7,7 @@ function single_integration(tf,S::CL_state,flags=100)
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
-    E0 = S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+    E0 = energy(S)
 
     counter=2
     Rvec[1,:].=S.cl.R
@@ -25,7 +25,7 @@ function single_integration(tf,S::CL_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+        E = energy(S)
         dE = abs(E-E0)/abs(E0)
         if dE>tol
             @show S.cl
@@ -51,7 +51,7 @@ function single_integration(tf,S::MF_state,flags=100)
     tr_sts=length(S.el.C) #number of electronic states that will be tracked over te dynamics
     C=zeros(Complex,flags+1,tr_sts)
 
-    E0 = sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+    E0 = energy(S)
 
     counter=2
     Rvec[1,:].=S.cl.R
@@ -83,7 +83,7 @@ function single_integration(tf,S::MF_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+        E=energy(S)
         dE=abs(E-E0)/abs(E0)
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
@@ -113,7 +113,7 @@ function single_integration(tf,S::SH_state,flags=100)
     C=zeros(Complex,flags+1,tr_sts)
     Ast=zeros(Int,flags+1)
 
-    E0 = S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+    E0 = energy(S)
 
     counter=2
     Rvec[1,:].=S.cl.R
@@ -149,7 +149,7 @@ function single_integration(tf,S::SH_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+        E=energy(S)
         dE=abs(E-E0)/abs(E0)
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
@@ -363,7 +363,7 @@ end
 
 function single_distance_integration(R_min,S::CL_state,tmax=10000)
     tf=0
-    E0=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+    E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -380,7 +380,7 @@ function single_distance_integration(R_min,S::CL_state,tmax=10000)
 
     #sanity check subroutine
     if sanity_checks
-        E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+        E=energy(S)
         dE=abs(E-E0)/abs(E0)
         if dE > tol
             @show S.cl
@@ -396,7 +396,7 @@ end
 
 function single_distance_integration(R_min,S::MF_state,tmax=10000)
     tf=0
-    E0=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+    E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -413,7 +413,7 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
 
     #sanity check subroutine
     if sanity_checks
-        E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+        E=energy(S)
         dE=abs(E-E0)/abs(E0)
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
@@ -432,7 +432,7 @@ end
 
 function single_distance_integration(R_min,S::SH_state,tmax=10000)
     tf=0
-    E0=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+    E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tf+=dt
@@ -455,7 +455,7 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
 
     #sanity check subroutine
     if sanity_checks
-        E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+        E=energy(S)
         dE=abs(E-E0)/abs(E0)
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
