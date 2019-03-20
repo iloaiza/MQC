@@ -24,14 +24,16 @@ function single_integration(tf,S::CL_state,flags=100)
     pvec[end,:].=S.cl.p
 
     #sanity check subroutine
-    E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
-    dE = abs(E-E0)/abs(E0)
-    if dE>tol
-        @show S.cl
-        @show E
-        @show E0
-        @show dE
-        error("Warning: energy conservation being violated beyond tolerance $tol")
+    if sanity_checks
+        E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+        dE = abs(E-E0)/abs(E0)
+        if dE>tol
+            @show S.cl
+            @show E
+            @show E0
+            @show dE
+            error("Warning: energy conservation being violated beyond tolerance $tol")
+        end
     end
 
     return Tf,Rvec,pvec
@@ -80,17 +82,19 @@ function single_integration(tf,S::MF_state,flags=100)
     C[end,:].=S.el.C
 
     #sanity check subroutine
-    E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
-    dE=abs(E-E0)/abs(E0)
-    Cnorm=sum(abs2.(S.el.C))
-    dnorm = abs(1-Cnorm)
-    if dE > tol || dnorm > tol
-        @show S.cl
-        @show Cnorm
-        @show E
-        @show E0
-        @show dE
-        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    if sanity_checks
+        E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+        dE=abs(E-E0)/abs(E0)
+        Cnorm=sum(abs2.(S.el.C))
+        dnorm = abs(1-Cnorm)
+        if dE > tol || dnorm > tol
+            @show S.cl
+            @show Cnorm
+            @show E
+            @show E0
+            @show dE
+            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+        end
     end
 
     return Tf,Rvec,pvec,C
@@ -144,17 +148,19 @@ function single_integration(tf,S::SH_state,flags=100)
     Ast[end]=S.ast
 
     #sanity check subroutine
-    E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
-    dE=abs(E-E0)/abs(E0)
-    Cnorm=sum(abs2.(S.el.C))
-    dnorm = abs(1-Cnorm)
-    if dE > tol || dnorm > tol
-        @show S.cl
-        @show Cnorm
-        @show E
-        @show E0
-        @show dE
-        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    if sanity_checks
+        E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+        dE=abs(E-E0)/abs(E0)
+        Cnorm=sum(abs2.(S.el.C))
+        dnorm = abs(1-Cnorm)
+        if dE > tol || dnorm > tol
+            @show S.cl
+            @show Cnorm
+            @show E
+            @show E0
+            @show dE
+            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+        end
     end
 
     return Tf,Rvec,pvec,C,Ast
@@ -373,14 +379,16 @@ function single_distance_integration(R_min,S::CL_state,tmax=10000)
     end
 
     #sanity check subroutine
-    E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
-    dE=abs(E-E0)/abs(E0)
-    if dE > tol
-        @show S.cl
-        @show E
-        @show E0
-        @show dE
-        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    if sanity_checks
+        E=S.el.E[1]+sum(abs2.(S.cl.p))/2/mass
+        dE=abs(E-E0)/abs(E0)
+        if dE > tol
+            @show S.cl
+            @show E
+            @show E0
+            @show dE
+            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+        end
     end
 
     return tf,S
@@ -404,17 +412,19 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
     end
 
     #sanity check subroutine
-    E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
-    dE=abs(E-E0)/abs(E0)
-    Cnorm=sum(abs2.(S.el.C))
-    dnorm = abs(1-Cnorm)
-    if dE > tol || dnorm > tol
-        @show S.cl
-        @show Cnorm
-        @show E
-        @show E0
-        @show dE
-        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    if sanity_checks
+        E=sum(abs2.(S.el.C).*S.el.E)+sum(abs2.(S.cl.p))/2/mass
+        dE=abs(E-E0)/abs(E0)
+        Cnorm=sum(abs2.(S.el.C))
+        dnorm = abs(1-Cnorm)
+        if dE > tol || dnorm > tol
+            @show S.cl
+            @show Cnorm
+            @show E
+            @show E0
+            @show dE
+            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+        end
     end
 
     return tf,S
@@ -444,17 +454,19 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
     end
 
     #sanity check subroutine
-    E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
-    dE=abs(E-E0)/abs(E0)
-    Cnorm=sum(abs2.(S.el.C))
-    dnorm = abs(1-Cnorm)
-    if dE > tol || dnorm > tol
-        @show S.cl
-        @show Cnorm
-        @show E
-        @show E0
-        @show dE
-        error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+    if sanity_checks
+        E=S.el.E[S.ast]+sum(abs2.(S.cl.p))/2/mass
+        dE=abs(E-E0)/abs(E0)
+        Cnorm=sum(abs2.(S.el.C))
+        dnorm = abs(1-Cnorm)
+        if dE > tol || dnorm > tol
+            @show S.cl
+            @show Cnorm
+            @show E
+            @show E0
+            @show dE
+            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
+        end
     end
 
     return tf,S
