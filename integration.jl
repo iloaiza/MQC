@@ -26,7 +26,11 @@ function single_integration(tf,S::CL_state,flags=100)
     #sanity check subroutine
     if sanity_checks
         E = energy(S)
-        dE = abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE=0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         if dE>tol
             @show S.cl
             @show E
@@ -84,7 +88,11 @@ function single_integration(tf,S::MF_state,flags=100)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
-        dE=abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE = 0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dE > tol || dnorm > tol
@@ -150,7 +158,11 @@ function single_integration(tf,S::SH_state,flags=100)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
-        dE=abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE=0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dE > tol || dnorm > tol
@@ -381,7 +393,11 @@ function single_distance_integration(R_min,S::CL_state,tmax=10000)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
-        dE=abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE=0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         if dE > tol
             @show S.cl
             @show E
@@ -414,7 +430,11 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
-        dE=abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE=0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dE > tol || dnorm > tol
@@ -456,7 +476,11 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
-        dE=abs(E-E0)/abs(E0)
+        if E==false #method cannot track energy
+            dE=0
+        else
+            dE = abs(E-E0)/abs(E0)
+        end
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dE > tol || dnorm > tol

@@ -126,9 +126,11 @@ function energy(S::FRIC_state)
 end
 
 function energy(S::CM2_state)
-    E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
-    E_pot=sum(abs2.(S.el.C).*E)
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    #CM2 doesn't conserve energy
+    return false
+end
 
-    return E_pot+E_kin
+function energy(S::CM3_state)
+    #CM3 doesn't conserve energy!
+    return false
 end
