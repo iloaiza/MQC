@@ -86,3 +86,36 @@ function FSSH_sanity_check(R,P,C,AST)
     println("           (this is a fraction of $(E_perc/100))")
     println("The maximum norm is Nmax=$(round(norm_max,6)), while the minimum is Nmin=$(round(norm_min,6))")
 end
+
+
+function energy(S::EH_state)
+    E_pot=sum(abs2.(S.el.C).*S.el.E)
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+
+    return E_pot+E_kin
+end
+
+function energy(S::FSSH_state)
+    E_pot=S.el.E[S.ast]
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+
+    return E_pot+E_kin
+end
+
+function energy(S::BO_state)
+    E_pot=S.el.E[1]
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+
+    return E_pot+E_kin
+end
+
+function energy(S::FRIC_state)
+    E_pot=S.el.E[1]
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+    E_lost=S.cl.mem[end]
+    @show E_pot
+    @show E_kin
+    @show E_lost
+
+    return E_pot+E_kin-E_lost
+end
