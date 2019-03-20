@@ -102,6 +102,14 @@ function energy(S::FSSH_state)
     return E_pot+E_kin
 end
 
+function energy(S::FSSH_dia_state)
+    E_pot=S.el.E[S.ast,S.ast]
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+
+    return E_pot+E_kin
+end
+
+
 function energy(S::BO_state)
     E_pot=S.el.E[1]
     E_kin=sum(abs2.(S.cl.p))/2/mass
@@ -113,9 +121,14 @@ function energy(S::FRIC_state)
     E_pot=S.el.E[1]
     E_kin=sum(abs2.(S.cl.p))/2/mass
     E_lost=S.cl.mem[end]
-    @show E_pot
-    @show E_kin
-    @show E_lost
 
     return E_pot+E_kin-E_lost
+end
+
+function energy(S::CM2_state)
+    E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
+    E_pot=sum(abs2.(S.el.C).*E)
+    E_kin=sum(abs2.(S.cl.p))/2/mass
+
+    return E_pot+E_kin
 end
