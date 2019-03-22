@@ -75,10 +75,11 @@ function health_check(S,E0)
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dnorm > tol
-        dE=tol+1
-        @show Cnorm
+            dE=tol+1
+            @show Cnorm
+        end
     end
-    if dE>tol ||
+    if dE>tol
         @show S.cl
         @show E
         @show E0

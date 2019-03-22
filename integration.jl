@@ -16,12 +16,12 @@ function single_integration(tf,S::CL_state,flags=100)
         S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
-        
+
     end
 
     #sanity check subroutine
     if sanity_checks
-        health_check(S)
+        health_check(S,E0)
     end
 
     return Tf,Rvec,pvec
@@ -55,7 +55,7 @@ function single_integration(tf,S::MF_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        health_check(S)
+        health_check(S,E0)
     end
 
     return Tf,Rvec,pvec,C
@@ -92,7 +92,7 @@ function single_integration(tf,S::SH_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        health_check(S)
+        health_check(S,E0)
     end
 
     return Tf,Rvec,pvec,C,Ast
@@ -293,143 +293,45 @@ end
 
 ########### TRAVEL DISTANCE INTEGRATIONS
 
-function single_distance_integration(R_min,S::CL_state,tmax=10000)
+function single_distance_integration(R_min,S,tmax=10000)
     tf=0
     ds=dt
     T=Float64[]
-    sizehint!(T,Int(round(tmax/dt)))
-    E0=energy(S)
+    if time_print
+        sizehint!(T,Int(round(tmax/dt)))
+        E0=energy(S)
+    end
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
             tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
             tf+=tstep
-            push!(T,tstep)
+            if time_print
+                push!(T,tstep)
+            end
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            dt,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
             tf+=tstep
-            push!(T,tstep)
+            if time_print
+                push!(T,tstep)
+            end
         end
     else
         error("R_min is neither a number nor an interval!")
     end
 
-    @show maximum(T),minimum(T),mean(T)
+    if time_print
+        @show maximum(T),minimum(T),mean(T)
+    end
     #sanity check subroutine
     if sanity_checks
-        E=energy(S)
-        if E==false #method cannot track energy
-            dE=0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        if dE > tol
-            @show S.cl
-            @show E
-            @show E0
-            @show dE
-            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-        end
+        health_check(S,E0)
     end
 
     return tf,S
 end
 
-function single_distance_integration(R_min,S::MF_state,tmax=10000)
-    tf=0
-    ds=dt
-    T=Float64[]
-    E0=energy(S)
-    if length(R_min)==1
-        while S.cl.R-R_min<0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
-            tf+=tstep
-            push!(T,tstep)
-        end
-    elseif length(R_min)==2
-        while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
-            tf+=tstep
-            push!(T,tstep)
-        end
-    else
-        error("R_min is neither a number nor an interval!")
-    end
-
-    @show maximum(T),minimum(T),mean(T)
-    ##sanity check subroutine
-    if sanity_checks
-        E=energy(S)
-        if E==false #method cannot track energy
-            dE=0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        Cnorm=sum(abs2.(S.el.C))
-        dnorm = abs(1-Cnorm)
-        if dE > tol || dnorm > tol
-            @show S.cl
-            @show Cnorm
-            @show E
-            @show E0
-            @show dE
-            @show T
-            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-        end
-    end
-
-    return tf,S
-end
-
-function single_distance_integration(R_min,S::SH_state,tmax=10000)
-    tf=0
-    ds=dt
-    T=Float64[]
-    E0=energy(S)
-    if length(R_min)==1
-        while S.cl.R-R_min<0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
-            tf+=tstep
-            push!(T,tstep)
-        end
-    elseif length(R_min)==2
-        while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
-            tf+=tstep
-            push!(T,tstep)
-        end
-    else
-        error("R_min is neither a number nor an interval!")
-    end
-
-    if tf==tmax
-        println("Warning! This trajectory was ended due to time limit")
-    end
-
-    @show maximum(T),minimum(T),mean(T)
-    #sanity check subroutine
-    if sanity_checks
-        E=energy(S)
-        if E==false #method cannot track energy
-            dE=0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        Cnorm=sum(abs2.(S.el.C))
-        dnorm = abs(1-Cnorm)
-        if dE > tol || dnorm > tol
-            @show S.cl
-            @show Cnorm
-            @show E
-            @show E0
-            @show dE
-            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-        end
-    end
-
-    return tf,S
-end
 
 function many_distance_integration(R_min,S::SH_state,Ntrajs,tmax=10000)
     #this kind of integration will only be useful for surface hopping schemes,
