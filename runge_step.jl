@@ -80,9 +80,6 @@ end
 
 function rk45_bigstep(S0,t0,tf,dt_ini,dt_min,eps=rk_tol)
     while t0<tf
-        if tf-t0<dt_ini
-            dt_ini=tf-t0
-        end
         tstep,S0,dt_ini=runge45_step(S0,dt_ini,dt_min,false,eps)
         t0+=tstep
     end
