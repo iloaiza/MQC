@@ -12,16 +12,11 @@ function single_integration(tf,S::CL_state,flags=100)
     counter=2
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
-    for i in 2:steps
-        S=runge_step(S)
-        if Tf[counter]==T[i]
-            Rvec[counter,:].=S.cl.R
-            pvec[counter,:].=S.cl.p
-            counter+=1
-        end
+    for i in 2:flags+1
+        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        Rvec[i,:].=S.cl.R
+        pvec[i,:].=S.cl.p
     end
-    Rvec[end,:].=S.cl.R
-    pvec[end,:].=S.cl.p
 
     #sanity check subroutine
     if sanity_checks
@@ -62,28 +57,12 @@ function single_integration(tf,S::MF_state,flags=100)
     pvec[1,:].=S.cl.p
     C[1,:].=S.el.C
     #t00=time() #uncomment for printing debug mode
-    for i in 2:steps
-        S=runge_step(S)
-        if Tf[counter]==T[i]
-            Rvec[counter,:].=S.cl.R
-            pvec[counter,:].=S.cl.p
-            C[counter,:].=S.el.C
-            counter+=1
-            #= Uncomment comment line for printing debug mode
-            @show T[i]
-            @show S.cl.R
-            E_pot = sum(abs2.(S.el.C).*S.el.E)
-            E_kin = S.cl.p^2/2/mass
-            @show E_pot+E_kin
-            @show sum(abs2.(S.el.C))
-            println("Time since last check: $(round(time()-t00,digits=3))")
-            t00=time()
-            ## =#
-        end
+    for i in 2:flags+1
+        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        Rvec[i,:].=S.cl.R
+        pvec[i,:].=S.cl.p
+        C[i,:].=S.el.C
     end
-    Rvec[end,:].=S.cl.R
-    pvec[end,:].=S.cl.p
-    C[end,:].=S.el.C
 
     #sanity check subroutine
     if sanity_checks
@@ -129,31 +108,13 @@ function single_integration(tf,S::SH_state,flags=100)
     C[1,:].=S.el.C
     Ast[1]=S.ast
     #t00=time() #uncomment for printing debug mode
-    for i in 2:steps
-        S=runge_step(S)
-        S=hop!(S)
-        if Tf[counter]==T[i]
-            Rvec[counter,:].=S.cl.R
-            pvec[counter,:].=S.cl.p
-            C[counter,:].=S.el.C
-            Ast[counter]=S.ast
-            counter+=1
-            #= Uncomment comment line for printing debug mode
-            @show T[i]
-            @show S.cl.R
-            E_pot = S.el.E[S.ast]
-            E_kin = S.cl.p^2/2/mass
-            @show E_pot+E_kin
-            @show sum(abs2.(S.el.C))
-            println("Time since last check: $(round(time()-t00,digits=3))")
-            t00=time()
-            ## =#
-        end
+    for i in 2:flags+1
+        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        Rvec[i,:].=S.cl.R
+        pvec[i,:].=S.cl.p
+        C[i,:].=S.el.C
+        Ast[i]=S.ast
     end
-    Rvec[end,:].=S.cl.R
-    pvec[end,:].=S.cl.p
-    C[end,:].=S.el.C
-    Ast[end]=S.ast
 
     #sanity check subroutine
     if sanity_checks
@@ -375,21 +336,27 @@ end
 
 function single_distance_integration(R_min,S::CL_state,tmax=10000)
     tf=0
+    ds=dt
+    T=Float64[]
+    sizehint!(T,Int(round(tmax/dt)))
     E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
+            dt,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     else
         error("R_min is neither a number nor an interval!")
     end
 
+    @show maximum(T),minimum(T),mean(T)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)
@@ -412,22 +379,27 @@ end
 
 function single_distance_integration(R_min,S::MF_state,tmax=10000)
     tf=0
+    ds=dt
+    T=Float64[]
     E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     else
         error("R_min is neither a number nor an interval!")
     end
 
-    #sanity check subroutine
+    @show maximum(T),minimum(T),mean(T)
+    ##sanity check subroutine
     if sanity_checks
         E=energy(S)
         if E==false #method cannot track energy
@@ -443,6 +415,7 @@ function single_distance_integration(R_min,S::MF_state,tmax=10000)
             @show E
             @show E0
             @show dE
+            @show T
             error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
         end
     end
@@ -452,18 +425,20 @@ end
 
 function single_distance_integration(R_min,S::SH_state,tmax=10000)
     tf=0
+    ds=dt
+    T=Float64[]
     E0=energy(S)
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
-            S=hop!(S)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tf+=dt
-            S=runge_step(S)
-            S=hop!(S)
+            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tf+=tstep
+            push!(T,tstep)
         end
     else
         error("R_min is neither a number nor an interval!")
@@ -473,6 +448,7 @@ function single_distance_integration(R_min,S::SH_state,tmax=10000)
         println("Warning! This trajectory was ended due to time limit")
     end
 
+    @show maximum(T),minimum(T),mean(T)
     #sanity check subroutine
     if sanity_checks
         E=energy(S)

@@ -3,6 +3,7 @@ using SharedArrays
 using LinearAlgebra
 using HDF5
 using Distributions
+using Statistics: mean
 
 include("code_config.jl")
 include("general_functions.jl")

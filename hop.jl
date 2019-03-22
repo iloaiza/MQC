@@ -1,10 +1,10 @@
-function hop!(S::FSSH_state)
+function hop!(S::FSSH_state,tstep)
   probs=zeros(nsts)
   ast=S.ast
   akk=abs2(S.el.C[ast])
   for i in 1:nsts
       if i != ast
-          prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,i] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[i])*dt/akk
+          prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,i] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -41,13 +41,13 @@ function hop!(S::FSSH_state)
 end
 
 
-function hop!(S::FSSH_dia_state)
+function hop!(S::FSSH_dia_state,tstep)
   probs=zeros(nsts)
   ast=S.ast
   akk=abs2(S.el.C[ast])
   for i in 1:nsts
       if i != ast
-          prob=2*imag(S.el.C[i]*conj(S.el.C[ast])*S.el.E[i,ast])*dt/akk
+          prob=2*imag(S.el.C[i]*conj(S.el.C[ast])*S.el.E[i,ast])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -75,14 +75,14 @@ function hop!(S::FSSH_dia_state)
 end
 
 
-function hop!(S::CM2_FSSH_state)
+function hop!(S::CM2_FSSH_state,tstep)
   probs=zeros(2)
   ast=S.ast
   akk=abs2(S.el.C[ast])
 
   for i in 1:2
       if i != ast
-          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -133,14 +133,14 @@ function hop!(S::CM2_FSSH_state)
 end
 
 
-function hop!(S::CM3_FSSH_state)
+function hop!(S::CM3_FSSH_state,tstep)
   probs=zeros(3)
   ast=S.ast
   akk=abs2(S.el.C[ast])
 
   for i in 1:3
       if i != ast
-          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -206,14 +206,14 @@ function hop!(S::CM3_FSSH_state)
   return S
 end
 
-function hop!(S::CM2_FSSH_FRIC_state)
+function hop!(S::CM2_FSSH_FRIC_state,tstep)
   probs=zeros(2)
   ast=S.ast
   akk=abs2(S.el.C[ast])
 
   for i in 1:2
       if i != ast
-          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -264,14 +264,14 @@ function hop!(S::CM2_FSSH_FRIC_state)
 end
 
 
-function hop!(S::CM3_FSSH_FRIC_state)
+function hop!(S::CM3_FSSH_FRIC_state,tstep)
   probs=zeros(3)
   ast=S.ast
   akk=abs2(S.el.C[ast])
 
   for i in 1:3
       if i != ast
-          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*dt/akk
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -337,7 +337,7 @@ function hop!(S::CM3_FSSH_FRIC_state)
   return S
 end
 
-function hop!(S::SHEEP_state)
+function hop!(S::SHEEP_state,tstep)
   num_tr_sts=length(SHEEP_REL)
   probs=zeros(nsts)
   ast_array=SHEEP_REL[S.ast]
@@ -345,7 +345,7 @@ function hop!(S::SHEEP_state)
   for tr_st in 1:num_tr_sts
       for ast in ast_array
           if tr_st != ast
-              prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,tr_st] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[tr_st])*dt/rho_kk
+              prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,tr_st] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[tr_st])*tstep/rho_kk
               probs[tr_st]+=maximum([0,prob])
           end
       end

@@ -1,171 +1,91 @@
-function runge_step(S::CL_state,δt=dt,NDOFs=S.cl.NDOFs)
-    R0=S.cl.R
-    p0=S.cl.p
-    mem0=S.cl.mem
-
-    dR1,dp1,dmem1=diff_eq(S)
-    kR1=δt*dR1
-    kp1=δt*dp1
-    kmem1=δt*dmem1
-
-    R2=R0+kR1/2
-    p2=p0+kp1/2
-    mem2=mem0+kmem1/2
-    S=builder_CL_state(R2,p2,S.prefix,S.el.Ua,NDOFs,mem2)
-    dR2,dp2,dmem2=diff_eq(S)
-    kR2=δt*dR2
-    kp2=δt*dp2
-    kmem2=δt*dmem2
-
-    R3=R0+kR2/2
-    p3=p0+kp2/2
-    mem3=mem0+kmem2/2
-    S=builder_CL_state(R3,p3,S.prefix,S.el.Ua,NDOFs,mem3)
-    dR3,dp3,dmem3=diff_eq(S)
-    kR3=δt*dR3
-    kp3=δt*dp3
-    kmem3=δt*dmem3
-
-    R4=R0+kR3
-    p4=p0+kp3
-    mem4=mem0+kmem3
-    S=builder_CL_state(R4,p4,S.prefix,S.el.Ua,NDOFs,mem4)
-    dR4,dp4,dmem4=diff_eq(S)
-    kR4=δt*dR4
-    kp4=δt*dp4
-    kmem4=δt*dmem4
-
-    Rnew=R0+kR1/6+kR2/3+kR3/3+kR4/6
-    pnew=p0+kp1/6+kp2/3+kp3/3+kp4/6
-    memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
-
-
-    return builder_CL_state(Rnew,pnew,S.prefix,S.el.Ua,NDOFs,memnew)
-end
-
-function runge_step(S::MF_state,δt=dt,NDOFs=S.cl.NDOFs)
-    R0=S.cl.R
-    p0=S.cl.p
-    C0=S.el.C
-    mem0=S.cl.mem
-
-    dR1,dp1,dC1,dmem1=diff_eq(S)
-    kR1=δt*dR1
-    kp1=δt*dp1
-    kC1=δt*dC1*S.el.C
-    kmem1=δt*dmem1
-
-    R2=R0+kR1/2
-    p2=p0+kp1/2
-    C2=C0+kC1/2
-    mem2=mem0+kmem1/2
-    S=builder_MF_state(R2,p2,C2,S.prefix,S.el.Ua,NDOFs,mem2)
-    dR2,dp2,dC2,dmem2=diff_eq(S)
-    kR2=δt*dR2
-    kp2=δt*dp2
-    kC2=δt*dC2*S.el.C
-    kmem2=δt*dmem2
-
-    R3=R0+kR2/2
-    p3=p0+kp2/2
-    C3=C0+kC2/2
-    mem3=mem0+kmem2/2
-    S=builder_MF_state(R3,p3,C3,S.prefix,S.el.Ua,NDOFs,mem3)
-    dR3,dp3,dC3,dmem3=diff_eq(S)
-    kR3=δt*dR3
-    kp3=δt*dp3
-    kC3=δt*dC3*S.el.C
-    kmem3=δt*dmem3
-
-    R4=R0+kR3
-    p4=p0+kp3
-    C4=C0+kC3
-    mem4=mem0+kmem3
-    S=builder_MF_state(R4,p4,C4,S.prefix,S.el.Ua,NDOFs,mem4)
-    dR4,dp4,dC4,dmem4=diff_eq(S)
-    kR4=δt*dR4
-    kp4=δt*dp4
-    kC4=δt*dC4*S.el.C
-    kmem4=δt*dmem4
-
-    Rnew=R0+kR1/6+kR2/3+kR3/3+kR4/6
-    pnew=p0+kp1/6+kp2/3+kp3/3+kp4/6
-    Cnew=C0+kC1/6+kC2/3+kC3/3+kC4/6
-    memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
-
-    if norm_fixer
-        if abs(sum(abs2.(Cnew))-1)>tol
-            println("Norm starting to break for...")
-            @show R0
-            @show p0
-            @show C0
-        end
+function runge_state_builder(S,y)
+    R,p,C,mem=y[1],y[2],y[3],y[4]
+    if S.prefix in CL_LIST
+        S=builder_CL_state(R,p,S.prefix,S.el.Ua,S.cl.NDOFs,mem)
+    elseif S.prefix in MF_LIST
+        S=builder_MF_state(R,p,C,S.prefix,S.el.Ua,S.cl.NDOFs,mem)
+    else
+        S=builder_SH_state(R,p,C,S.ast,S.prefix,S.el.Ua,S.cl.NDOFs,mem)
     end
 
-    return builder_MF_state(Rnew,pnew,Cnew,S.prefix,S.el.Ua,NDOFs,memnew)
+    return S
 end
 
-function runge_step(S::SH_state,δt=dt,NDOFs=S.cl.NDOFs)
-    R0=S.cl.R
-    p0=S.cl.p
-    C0=S.el.C
-    mem0=S.cl.mem
+function runge_ks(S0,tstep)
+    if S0.cl.NDOFs==1
+        y0=[S0.cl.R[1],S0.cl.p[1],S0.el.C,S0.cl.mem]
+    else
+        y0=[S0.cl.R,S0.cl.p,S0.el.C,S0.cl.mem]
+    end
+    S=runge_state_builder(S0,y0) #make a copy, won't change S0 until necessary
 
-    dR1,dp1,dC1,dmem1=diff_eq(S)
-    kR1=δt*dR1
-    kp1=δt*dp1
-    kC1=δt*dC1*S.el.C
-    kmem1=δt*dmem1
+    k1=tstep*diff_eq(S)
+    y1=y0.+k1/4
+    S=runge_state_builder(S,y1)
 
-    R2=R0+kR1/2
-    p2=p0+kp1/2
-    C2=C0+kC1/2
-    mem2=mem0+kmem1/2
-    S=builder_SH_state(R2,p2,C2,S.ast,S.prefix,S.el.Ua,NDOFs,mem2)
-    dR2,dp2,dC2,dmem2=diff_eq(S)
-    kR2=δt*dR2
-    kp2=δt*dp2
-    kC2=δt*dC2*S.el.C
-    kmem2=δt*dmem2
+    k2=tstep*diff_eq(S)
+    y2=y0 .+ 3k1/32 .+ 9k2/32
+    S=runge_state_builder(S,y2)
 
-    R3=R0+kR2/2
-    p3=p0+kp2/2
-    C3=C0+kC2/2
-    mem3=mem0+kmem2/2
-    S=builder_SH_state(R3,p3,C3,S.ast,S.prefix,S.el.Ua,NDOFs,mem3)
-    dR3,dp3,dC3,dmem3=diff_eq(S)
-    kR3=δt*dR3
-    kp3=δt*dp3
-    kC3=δt*dC3*S.el.C
-    kmem3=δt*dmem3
+    k3=tstep*diff_eq(S)
+    y3=y0 .+ 1932k1/2197 .- 7200k2/2197 .+ 7296k3/2197
+    S=runge_state_builder(S,y3)
 
-    R4=R0+kR3
-    p4=p0+kp3
-    C4=C0+kC3
-    mem4=mem0+kmem3
-    S=builder_SH_state(R4,p4,C4,S.ast,S.prefix,S.el.Ua,NDOFs,mem4)
-    dR4,dp4,dC4,dmem4=diff_eq(S)
-    kR4=δt*dR4
-    kp4=δt*dp4
-    kC4=δt*dC4*S.el.C
-    kmem4=δt*dmem4
+    k4=tstep*diff_eq(S)
+    y4=y0 .+ 439k1/216 .- 8k2 .+ 3680k3/513 .- 845k4/4104
+    S=runge_state_builder(S,y4)
 
-    Rnew=R0+kR1/6+kR2/3+kR3/3+kR4/6
-    pnew=p0+kp1/6+kp2/3+kp3/3+kp4/6
-    Cnew=C0+kC1/6+kC2/3+kC3/3+kC4/6
-    memnew=mem0+kmem1/6+kmem2/3+kmem3/3+kmem4/6
+    k5=tstep*diff_eq(S)
+    y5=y0 .- 8k1/27 .+ 2k2 .- 3544k3/2565 .+ 1859k4/4104 .- 11k5/40
+    S=runge_state_builder(S,y5)
 
-    if norm_fixer
-        if abs(sum(abs2.(Cnew))-1)>tol
-            println("Norm starting to break for...")
-            @show R0
-            @show p0
-            @show sum(abs2.(C0))
-            @show sum(abs2.(Cnew))
-            @show S.ast
-            Cnew=Cnew/sqrt(sum(abs2.(Cnew)))
-        end
+    k6=tstep*diff_eq(S)
+
+    return k1,k2,k3,k4,k5,k6
+end
+
+function runge45_step(S0,tstep,dt_min,force=false,eps=rk_tol)
+    if tstep>dt_max
+        tstep=dt_max
+    end
+    k1,k2,k3,k4,k5,k6 = runge_ks(S0,tstep)
+    if S0.cl.NDOFs==1
+        y0=[S0.cl.R[1],S0.cl.p[1],S0.el.C,S0.cl.mem]
+    else
+        y0=[S0.cl.R,S0.cl.p,S0.el.C,S0.cl.mem]
     end
 
-    return builder_SH_state(Rnew,pnew,Cnew,S.ast,S.prefix,S.el.Ua,NDOFs,memnew)
+    ynew=y0 .+ 25k1/216 .+ 1408k3/2565 .+ 2197k4/4101 .- k5/5
+    znew=y0 .+ 16k1/135 .+ 6656k3/12825 .+ 28561k4/56430 .- 9k5/50 .+ 2k6/55
+    R=sum([sum(abs.(znew[i]-ynew[i])) for i in 1:4])
+    ds=tstep*sqrt(sqrt(rk_tol/(2*R)))
+    if R<=rk_tol || force
+        S0=runge_state_builder(S0,ynew)
+        if S0.prefix in SH_LIST
+            S0=hop!(S0,tstep)
+        end
+        return tstep,S0,ds
+    else
+        if ds<dt_min
+            println("Runge-Kutta warning: convergence not achieved for minimum timestep")
+            println("Continuing, be wary of results...")
+            @show ds
+            @show dt_min
+            runge45_step(S,dt_min,dt_min,true,eps)
+        else
+            runge45_step(S0,ds,dt_min,false,eps)
+        end
+
+    end
+end
+
+function rk45_bigstep(S0,t0,tf,dt_ini,dt_min,eps=rk_tol)
+    while t0<tf
+        if tf-t0<dt_ini
+            dt_ini=tf-t0
+        end
+        tstep,S0,dt_ini=runge45_step(S0,dt_ini,dt_min,false,eps)
+        t0+=tstep
+    end
+    return S0
 end
