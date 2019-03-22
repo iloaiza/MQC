@@ -1,5 +1,5 @@
 #= This file holds the configurations for the code. Anything can be changed by using
-the codewords as seen in constant definitions.
+the codewords as seen in constant definitions after the include section of any Initial_data file.
 
 =#
 ## CONTROL VARIABLES FOR DYNAMICS
@@ -14,5 +14,12 @@ const sanity_checks = true #will perform sanity checks by the end of every traje
 #NOT IMPLEMENTED# const high_verbose_sanity_checks = false #turn true for sanity check every timestep or checkpoint (for tracking region where dynamics break)
 const time_print = true #shows the maximum, minimum, and mean timestep per trajectory in output
 
+## WALLTIMES AND RESOLUTION OF SAVES
+const walltime = 10000 #walltime, in a.u. (~242fs) for simulations which continue until the trajectory has left interaction zone
+const checkpoints = 100 #default number of checkpoints for DYNAMICS simulations
+
 ## FOR AUTOMATIC OUTPUT PLOTTING
-const plot_out = false #turn true for automatic generation of default plots
+const plot_out = true #turn true for automatic generation of default plots
+const plot_method = "plotlyjs" #for plotting method (in Plots package)
+const HISTO_RES = 150 #resolution of histograms (i.e. number of bars)
+const SH_eval = true #when doing SH statistics, chooses final adiabatic state (false for mean of electronic properties)

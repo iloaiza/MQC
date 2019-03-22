@@ -1,4 +1,4 @@
-function single_integration(tf,S::CL_state,flags=100)
+function single_integration(tf,S::CL_state,flags=checkpoints)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -27,7 +27,7 @@ function single_integration(tf,S::CL_state,flags=100)
     return Tf,Rvec,pvec
 end
 
-function single_integration(tf,S::MF_state,flags=100)
+function single_integration(tf,S::MF_state,flags=checkpoints)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -61,7 +61,7 @@ function single_integration(tf,S::MF_state,flags=100)
     return Tf,Rvec,pvec,C
 end
 
-function single_integration(tf,S::SH_state,flags=100)
+function single_integration(tf,S::SH_state,flags=checkpoints)
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
@@ -99,7 +99,7 @@ function single_integration(tf,S::SH_state,flags=100)
 end
 
 
-function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=100)
+function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=checkpoints)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -126,7 +126,7 @@ function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC
 end
 
-function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=100)
+function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=checkpoints)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -155,7 +155,7 @@ function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC,C_VEC
 end
 
-function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=100)
+function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=checkpoints)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -187,7 +187,7 @@ function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=100)
         return TF,R_VEC,P_VEC,C_VEC,AST_VEC
 end
 
-function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=100)
+function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -217,7 +217,7 @@ function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=100)
         return TF,R_VEC,P_VEC
 end
 
-function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=100)
+function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -254,7 +254,7 @@ function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=100)
         return TF,R_VEC,P_VEC,C_VEC
 end
 
-function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,flags=100)
+function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -293,7 +293,7 @@ end
 
 ########### TRAVEL DISTANCE INTEGRATIONS
 
-function single_distance_integration(R_min,S,tmax=10000)
+function single_distance_integration(R_min,S,tmax=walltime)
     tf=0
     ds=dt
     T=Float64[]
@@ -333,7 +333,7 @@ function single_distance_integration(R_min,S,tmax=10000)
 end
 
 
-function many_distance_integration(R_min,S::SH_state,Ntrajs,tmax=10000)
+function many_distance_integration(R_min,S::SH_state,Ntrajs,tmax=walltime)
     #this kind of integration will only be useful for surface hopping schemes,
     #since mean-field schemes only need to be integrated once
     S_array=[S for k in 1:Ntrajs]
