@@ -1,7 +1,7 @@
 using Plots
 eval(Meta.parse(plot_method))
-GUIDEFONT=font(24,"Helvetica");
-TICKFONT=font(24,"Helvetica");
+GUIDEFONT=font(24,"Helvetica")
+TICKFONT=font(24,"Helvetica")
 
 if GEN_METHOD == "DYNAMICS"
     if length(R0) ==1 #1 nuclear dimension
@@ -69,7 +69,7 @@ if GEN_METHOD == "DYNAMICS"
         plot!(xlabel="Position (a.u.)",ylabel="Nuclear distribution",xlims=(xmin,xmax));
         plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT);
         ylims!(hmin-0.1,hmax+0.1)
-        savefig(P,filename*".png")
+        savefig(P,"plots/"*filename*".png")
     else #NDOFs != 1
         println("Still no plot implementation for multi_dimensional case")
     end
@@ -108,7 +108,7 @@ if GEN_METHOD == "K_SIMULATIONS"
                 end
             end
         end
-            
+
             ########### GROUND STATE PLOTTER. PLOTS FINAL GS POPULATIONS FOR DYNAMICS IN DYN_LIST
         GS_PLOT=plot()
         for DYN in DYN_LIST
@@ -127,7 +127,7 @@ if GEN_METHOD == "K_SIMULATIONS"
             end
         end
 
-        savefig(GS_PLOT,filename*"_GS_PLOT.png")
+        savefig(GS_PLOT,"plots/"*potname*"_R0($R0)_GS_PLOT.png")
 
             ####### STATE TRANSMISSION PLOTS
         #cond(R,P) is a function that gives true if R and P are within some condition of interest for the plot, otherwise false
@@ -164,7 +164,7 @@ if GEN_METHOD == "K_SIMULATIONS"
             end
         end
 
-        savefig(P,filename*"_STATE_TRANS.png")
+        savefig(P,"plots/"*potname*"_R0($R0)_STATE_TRANS.png")
 
             ####### STATE REFLECTION PLOTS
         #cond(R,P) is a function that gives true if R and P are within some condition of interest for the plot, otherwise false
@@ -201,7 +201,7 @@ if GEN_METHOD == "K_SIMULATIONS"
             end
         end
 
-        savefig(P,filename*"_STATE_REFL.png")
+        savefig(P,"plots/"*potname*"_R0($R0)_STATE_REFL.png")
 
     else
         println("Still no automatic plotting implementation for multidimensional K_SIMULATIONS")
