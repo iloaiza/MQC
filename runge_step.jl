@@ -68,10 +68,10 @@ function runge45_step(S0,tstep,dt_min,force=false,eps=rk_tol)
     else
         if ds<dt_min
             println("Runge-Kutta warning: convergence not achieved for minimum timestep")
-            println("Continuing, be wary of results...")
+            println("Continuing, be wary of results (specially if warning repeats!)...")
             @show ds
             @show dt_min
-            runge45_step(S,dt_min,dt_min,true,eps)
+            runge45_step(S0,dt_min,dt_min,true,eps)
         else
             runge45_step(S0,ds,dt_min,false,eps)
         end
@@ -87,5 +87,5 @@ function rk45_bigstep(S0,t0,tf,dt_ini,dt_min,eps=rk_tol)
         tstep,S0,dt_ini=runge45_step(S0,dt_ini,dt_min,false,eps)
         t0+=tstep
     end
-    return S0
+    return S0,tf
 end

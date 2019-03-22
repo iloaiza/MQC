@@ -13,7 +13,7 @@ function single_integration(tf,S::CL_state,flags=checkpoints)
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
     for i in 2:flags+1
-        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
 
@@ -47,7 +47,7 @@ function single_integration(tf,S::MF_state,flags=checkpoints)
     C[1,:].=S.el.C
     #t00=time() #uncomment for printing debug mode
     for i in 2:flags+1
-        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
@@ -83,7 +83,7 @@ function single_integration(tf,S::SH_state,flags=checkpoints)
     Ast[1]=S.ast
     #t00=time() #uncomment for printing debug mode
     for i in 2:flags+1
-        S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
