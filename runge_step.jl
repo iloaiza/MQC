@@ -11,13 +11,12 @@ function runge_state_builder(S,y)
     return S
 end
 
-function runge_ks(S0,tstep)
-    if S0.cl.NDOFs==1
-        y0=[S0.cl.R[1],S0.cl.p[1],S0.el.C,S0.cl.mem]
+function runge_ks(S,tstep)
+    if S.cl.NDOFs==1
+        y0=[S.cl.R[1],S.cl.p[1],S.el.C,S.cl.mem]
     else
-        y0=[S0.cl.R,S0.cl.p,S0.el.C,S0.cl.mem]
+        y0=[S.cl.R,S.cl.p,S.el.C,S.cl.mem]
     end
-    S=runge_state_builder(S0,y0) #make a copy, won't change S0 until necessary
 
     k1=tstep*diff_eq(S)
     y1=y0.+k1/4
