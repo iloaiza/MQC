@@ -16,23 +16,12 @@ function single_integration(tf,S::CL_state,flags=100)
         S=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
+        
     end
 
     #sanity check subroutine
     if sanity_checks
-        E = energy(S)
-        if E==false #method cannot track energy
-            dE=0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        if dE>tol
-            @show S.cl
-            @show E
-            @show E0
-            @show dE
-            error("Warning: energy conservation being violated beyond tolerance $tol")
-        end
+        health_check(S)
     end
 
     return Tf,Rvec,pvec
@@ -66,22 +55,7 @@ function single_integration(tf,S::MF_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        E=energy(S)
-        if E==false #method cannot track energy
-            dE = 0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        Cnorm=sum(abs2.(S.el.C))
-        dnorm = abs(1-Cnorm)
-        if dE > tol || dnorm > tol
-            @show S.cl
-            @show Cnorm
-            @show E
-            @show E0
-            @show dE
-            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-        end
+        health_check(S)
     end
 
     return Tf,Rvec,pvec,C
@@ -118,22 +92,7 @@ function single_integration(tf,S::SH_state,flags=100)
 
     #sanity check subroutine
     if sanity_checks
-        E=energy(S)
-        if E==false #method cannot track energy
-            dE=0
-        else
-            dE = abs(E-E0)/abs(E0)
-        end
-        Cnorm=sum(abs2.(S.el.C))
-        dnorm = abs(1-Cnorm)
-        if dE > tol || dnorm > tol
-            @show S.cl
-            @show Cnorm
-            @show E
-            @show E0
-            @show dE
-            error("Warning, energy and/or norm consevation being broken beyond tolerance $tol")
-        end
+        health_check(S)
     end
 
     return Tf,Rvec,pvec,C,Ast
