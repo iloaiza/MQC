@@ -7,6 +7,7 @@ INSIDE_SIMULATIONS=true
 
 if !INSIDE_SIMULATIONS
         println("Warning: INSIDE_SIMULATIONS marked as false inside K_FILEMAKER, make sure this is intentional")
+        println("If inside simulations, save (and plot, if plot_out==true) will not happen")
         include("data_functions.jl")
         using SharedArrays
         using Distributed
@@ -82,11 +83,11 @@ end
 
 
 for (pnum,p0) in enumerate(K)
-    file_name=dirname*"/p0($p0).h5"
+    filename=dirname*"/p0($p0).h5"
     for DYN in DYN_LIST
                 dyn_sts=eval(Meta.parse("$(DYN)_sts"))
                 if DYN in CL_LIST
-                    T,R,P=CL_read(file_name,DYN)
+                    T,R,P=CL_read(filename,DYN)
                     for dof in 1:NDOFs
                             R_string="FR_$(DYN)[$pnum,$dof]=$R[$dof]"
                             P_string="FP_$(DYN)[$pnum,$dof]=$P[$dof]"
@@ -94,7 +95,7 @@ for (pnum,p0) in enumerate(K)
                             eval(Meta.parse(P_string))
                     end
                 elseif DYN in MF_LIST
-                    T,R,P,C=MF_read(file_name,DYN)
+                    T,R,P,C=MF_read(filename,DYN)
                     for dof in 1:NDOFs
                             R_string="FR_$(DYN)[$pnum,$dof]=$R[$dof]"
                             P_string="FP_$(DYN)[$pnum,$dof]=$P[$dof]"
@@ -106,7 +107,7 @@ for (pnum,p0) in enumerate(K)
                         eval(Meta.parse(pop_string))
                     end
                 elseif DYN in SH_LIST
-                    T,R,P,C,AST=SH_read(file_name,DYN)
+                    T,R,P,C,AST=SH_read(filename,DYN)
                     for dof in 1:NDOFs
                                 R_string="FR_$(DYN)[:,$pnum,$dof].=$R[:,end,$dof]"
                                 P_string="FP_$(DYN)[:,$pnum,$dof].=$P[:,end,$dof]"
@@ -128,10 +129,10 @@ end #for pnums
 
 
 "Starting save file"
-file_name=dirname*"/K_SIMULATION.h5"
+filename=dirname*"/K_SIMULATION.h5"
 if FIRST_RUN
-    h5write(file_name,"K",K)
-    h5write(file_name,"META_DICT",string(META_DICT))
+    h5write(filename,"K",K)
+    h5write(filename,"META_DICT",string(META_DICT))
 end
 
 for DYN in DYN_LIST
@@ -140,7 +141,7 @@ for DYN in DYN_LIST
         P_string="fp=[p for p in FP_$(DYN)]"
         eval(Meta.parse(R_string))
         eval(Meta.parse(P_string))
-        general_K_save([fr,fp],file_name,DYN)
+        general_K_save([fr,fp],filename,DYN)
     elseif DYN in MF_LIST
         R_string="fr=[r for r in FR_$(DYN)]"
         P_string="fp=[p for p in FP_$(DYN)]"
@@ -148,7 +149,7 @@ for DYN in DYN_LIST
         eval(Meta.parse(R_string))
         eval(Meta.parse(P_string))
         eval(Meta.parse(pop_string))
-        general_K_save([fr,fp,fpop],file_name,DYN)
+        general_K_save([fr,fp,fpop],filename,DYN)
     elseif DYN in SH_LIST
         R_string="fr=[r for r in FR_$(DYN)]"
         P_string="fp=[p for p in FP_$(DYN)]"
@@ -158,7 +159,7 @@ for DYN in DYN_LIST
         eval(Meta.parse(P_string))
         eval(Meta.parse(pop_string))
         eval(Meta.parse(ast_string))
-        general_K_save([fr,fp,fpop,fast],file_name,DYN)
+        general_K_save([fr,fp,fpop,fast],filename,DYN)
     end
 end
 
