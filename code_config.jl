@@ -5,7 +5,7 @@ the codewords as seen in constant definitions after the include section of any I
 ## CONTROL VARIABLES FOR DYNAMICS
 const rk_tol = 1e-5 #default tolerance for each step of runge-kutta 45 adaptative algorithm
 const dt_min = 1e-3 #default minimum timestep for rk45 (2.42e-5fs)
-const dt_max = 20.0 #default maximum timestep for rk45 (0.12fs)
+const dt_max = 10.0 #default maximum timestep for rk45 (0.12fs)
 
 ## VARIABLES FOR DEBUGGING AND PRINTING CHECKS THROUGHOUT DYNAMICS
 const print_phase = false #make true to print warnings when phase (from dia->adi transformation) is being used as sign and not just rounding
@@ -17,6 +17,7 @@ const time_print = true #shows the maximum, minimum, and mean timestep per traje
 ## WALLTIMES AND RESOLUTION OF SAVES
 const walltime = 10000 #walltime, in a.u. (~242fs) for simulations which continue until the trajectory has left interaction zone
 const checkpoints = 100 #default number of checkpoints for DYNAMICS simulations
+FIRST_RUN = false #true to create savefile with initial energy (also creates folder for K_SIMULATIONS)
 
 ## FOR AUTOMATIC OUTPUT PLOTTING
 const plot_out = true #turn true for automatic generation of default plots
