@@ -5,6 +5,7 @@
 #otherwise, just run using 'julia DYNAMICS.jl INITIAL_DATA_FILENAME'
 #the INITIAL_DATA_FILENAME is a .jl file that is in the Initial_data folder
 tic0=time()
+GEN_METHOD="DYNAMICS" #for automatic plotting, otherwise isn't used
 
 using Distributed
 
@@ -185,3 +186,7 @@ end
 println("FINISHED SUCCESSFULLY!")
 tic1=time()
 println("The total time of running was $(round(tic1-tic0,digits=4))s")
+
+if plot_out #option activated in code_config or in startup file after
+    include("automatic_plotting.jl")
+end

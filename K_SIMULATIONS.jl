@@ -5,6 +5,7 @@
 #otherwise, just run using 'julia ENERGY_SIMULATIONS.jl INITIAL_DATA_FILENAME'
 #the INITIAL_DATA_FILENAME is a .jl file that is in the Initial_data folder
 tic00=time()
+GEN_METHOD = "K_SIMULATIONS"
 
 using HDF5 #package used for saving data
 using Distributions #used for initial conditions distributions (such as wigner)
@@ -160,3 +161,7 @@ for p0 in K
 end
 
 include("K_FILEMAKER.jl")
+
+if plot_out #option activated in code_config or in startup file after
+    include("automatic_plotting.jl")
+end
