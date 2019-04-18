@@ -179,12 +179,7 @@ function integral(f,a,b,dx=1e-5) #Riemann integral
 end
 
 function eye(dims,eltype=Float64)
-    M=zeros(eltype,dims,dims)
-    for n in 1:dims
-        M[n,n]=1
-    end
-
-    return M
+    return Diagonal(ones(eltype,dims))
 end
 
 function norm(v)
