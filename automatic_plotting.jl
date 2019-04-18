@@ -4,72 +4,69 @@ GUIDEFONT=font(24,"Helvetica")
 TICKFONT=font(24,"Helvetica")
 
 if GEN_METHOD == "DYNAMICS"
-    if length(R0) ==1 #1 nuclear dimension
-        E0=h5read(file,"E0");                                     #LOAD INITIAL ENERGY
-
+    if length(R0) == 1 #1 nuclear dimension
         for dyn in DYN_LIST
             println("Loading $dyn...")
             if dyn in CL_LIST
-                str="""T_$(dyn),R_$(dyn),P_$(dyn)=CL_read("$file","$dyn")"""
+                str="""T_$(dyn),R_$(dyn),P_$(dyn)=CL_read("$filename","$dyn")"""
             elseif dyn in MF_LIST
-                str="""T_$(dyn),R_$(dyn),P_$(dyn),C_$(dyn)=MF_read("$file","$dyn")"""
+                str="""T_$(dyn),R_$(dyn),P_$(dyn),C_$(dyn)=MF_read("$filename","$dyn")"""
             elseif dyn in SH_LIST
-                str="""T_$(dyn),R_$dyn,P_$(dyn),C_$(dyn),AST_$(dyn)=SH_read("$file","$dyn")"""
+                str="""T_$(dyn),R_$dyn,P_$(dyn),C_$(dyn),AST_$(dyn)=SH_read("$filename","$dyn")"""
             end
             eval(Meta.parse(str))
         end
 
-        Rmin = R0 + 10
-        Rmax = R0 - 10
+        XLIMS=[R0+10.0,R0-10.0]
         for dyn in DYN_LIST
             min_str = "minimum(R_$(dyn))"
             max_str = "maximum(R_$(dyn))"
-            min = eval(Meta.parse(min_str))
-            max = eval(Meta.parse(max_str))
-            if Rmin > min
-                Rmin = min
+            mini = eval(Meta.parse(min_str))
+            maxi = eval(Meta.parse(max_str))
+            if XLIMS[1] > mini
+                XLIMS[1] = mini
             end
-            if Rmax < max
-                Rmax = max
+            if XLIMS[2] < maxi
+                XLIMS[2] = maxi
             end
         end
 
-        xmin=Rmin-0.05*abs(Rmin)
-        xmax=Rmax+0.05*abs(Rmax)
+        XLIMS[1]=XLIMS[1]-0.05*abs(XLIMS[1])
+        XLIMS[2]=XLIMS[2]+0.05*abs(XLIMS[2])
 
-        hmax = 1
-        hmin = -1
-        inv = 1
+        HLIMS=[1.0,-1,1] #third one holds mirror for plot clarity
         for dyn in DYN_LIST
             println("Building histograms for $dyn")
-            str="Rbase_$dyn,HR_$dyn=super_histo(R_$dyn[:,1,:],$xmin,$xmax,$HISTO_RES)"
+            str="Rbase_$dyn,HR_$dyn=super_histo(R_$dyn[:,1,:],$(XLIMS[1]),$(XLIMS[2]),$HISTO_RES)"
             eval(Meta.parse(str))
-            str="HR_$dyn=$inv.*HR_$dyn./maximum(HR_$dyn[:,1])"
+            str="HR_$dyn=$(HLIMS[3]) .* HR_$dyn ./ maximum(HR_$dyn[:,1])"
             eval(Meta.parse(str))
-            inv = inv*-1
+            HLIMS[3] = HLIMS[3]*-1
 
-            min_str = "minimum(HR_$(dyn))"
-            max_str = "maximum(HR_$(dyn))"
-            min = eval(Meta.parse(min_str))
-            max = eval(Meta.parse(max_str))
-            if hmin > min
-                hmin = min
+            min_str = "minimum(HR_$(dyn)[:,end])"
+            max_str = "maximum(HR_$(dyn)[:,end])"
+            mini = eval(Meta.parse(min_str))
+            maxi = eval(Meta.parse(max_str))
+            if HLIMS[1] > mini
+                HLIMS[1] = mini
             end
-            if hmax < max
-                hmax = max
+            if HLIMS[2] < maxi
+                HLIMS[2] = maxi
             end
         end
 
-        plot_str = """plot(Rbase_$(dyn)[:,1],HR_$(dyn)[:,1],label="$(dyn)_i",line=(1,:dash),color=:black)"""
+        dyn_1=DYN_LIST[1]
+        plot_str = """plot(Rbase_$(dyn_1)[:,1],HR_$(dyn_1)[:,1],label="$(dyn_1)_i",line=(1,:dash),color=:black)"""
         P=eval(Meta.parse(plot_str))
         for dyn in DYN_LIST
             plot_str = """plot!(Rbase_$(dyn)[:,end],HR_$(dyn)[:,end],label="$(dyn)",line=(2,:solid))"""
             eval(Meta.parse(plot_str))
         end
-        plot!(xlabel="Position (a.u.)",ylabel="Nuclear distribution",xlims=(xmin,xmax));
+        plot!(xlabel="Position (a.u.)",ylabel="Nuclear distribution",xlims=XLIMS);
         plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT);
-        ylims!(hmin-0.1,hmax+0.1)
-        savefig(P,"plots/"*filename*".png")
+        #ylims!(hmin-0.1,hmax+0.1)
+        savefig(P,"plots/"*potname*"R0($R0)_p0($p0).png")
+        println("figure saved!")
     else #NDOFs != 1
         println("Still no plot implementation for multi_dimensional case")
     end
