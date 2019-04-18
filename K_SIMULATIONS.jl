@@ -54,6 +54,8 @@ println("The momentum array is")
 @show K
 println("The maximum time per trajectory is")
 @show tmax
+println("The initial distribution for the trajectories is")
+@show initial_dist
 println("The dynamics that will be done are:")
 for DYN in DYN_LIST
     dyn_sts=eval(Meta.parse("$(DYN)_sts"))

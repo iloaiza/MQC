@@ -13,8 +13,6 @@ using Distributed
 #cd("MQC")
 @everywhere input_name=remotecall_fetch(i->ARGS[i],1,1)
 
-FIRST_RUN=true
-initial_dist=false
 
 println("Including function modules")
 if split(input_name,".")[end]=="jl"
@@ -24,7 +22,7 @@ else
 end
 
 if initial_dist==false
-    initial_dist=wigner
+    initial_dist=constant_dist
 end
 
 ########## Stuff for text output (i.e. do a logfile!)
@@ -60,6 +58,8 @@ println("The initial conditions are")
 @show p0
 @show C0
 @show E0
+println("The distribution is")
+@show initial_dist
 
 NDOFs=length(R0)
 println("The dynamics that will be done are:")
