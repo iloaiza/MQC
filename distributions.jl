@@ -22,7 +22,7 @@ function wigner(A) #A contains the parameters for Wigner distribution. returns a
     return [X,P]
 end
 
-function wigner_std(A,σx=1/sqrt(2),σp=1/sqrt(2)) #A=[xm,pm] contains the parameters for Wigner distribution, set σx and σp here for variable standard deviation. returns a position and a momentum under the Wigner distribution
+function wigner_std(A,σx=20/A[2],σp=A[2]/40) #A=[xm,pm] contains the parameters for Wigner distribution, set σx and σp here for variable standard deviation. returns a position and a momentum under the Wigner distribution
     xm=A[1] #mean position
     pm=A[2] #mean momentum
     X=zeros(Float64,size(xm))
