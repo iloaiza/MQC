@@ -65,25 +65,38 @@ end
 
 #sanity check subroutine
 function health_check(S,E0)
-    E = energy(S)
-    if E==false #method cannot track energy
-        dE=0
+    normbreak=false
+    if E0 == false
+        dE = 0
     else
+        E = energy(S)
         dE = abs(E-E0)/abs(E0)
     end
     if S.prefix in MF_LIST || S.prefix in SH_LIST
         Cnorm=sum(abs2.(S.el.C))
         dnorm = abs(1-Cnorm)
         if dnorm > tol
-            dE=tol+1
+            normbreak=true
             @show Cnorm
+            println("Warning: norm breaking!")
         end
     end
-    if dE>tol
+    if dE>tol || normbreak
         @show S.cl
         @show E
         @show E0
         @show dE
-        error("Warning: energy conservation and/or norm breaking being violated beyond tolerance $tol")
+        message="Warning! "
+        if dE>tol
+            message=message*"Energy conservation being violated beyond tolerance $tol. "
+        end
+        if normbreak
+            message=message*"Norm breaking being violated beyond tolerance $tol."
+        end
+        if sanity_breaks
+            error(message)
+        else
+            println(message)
+        end
     end
 end
