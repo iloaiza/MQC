@@ -42,15 +42,15 @@ end
 function energy(S::SHEEP_state)
     ast_array=SHEEP_REL[S.ast]
     rho_kk=sum(abs2.(S.el.C[ast_array]))
-    Epot=0.0
+    Epot=[0.0]
     for ast in ast_array
         c2=abs2(S.el.C[ast])
-        Epot+=c2*S.el.E[ast]
+        Epot[1]+=c2*S.el.E[ast]
     end
-    Epot=Epot/rho_kk
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    Epot[1]=Epot[1]/rho_kk
+    Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return E_pot+E_kin-E_lost
+    return Epot[1]+Ekin
 end
 
 function energy(S::CM2_state)
