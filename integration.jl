@@ -12,15 +12,22 @@ function single_integration(tf,S::CL_state,flags=checkpoints)
     counter=2
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
+    dt_ini=dt
+    t00=time()
     for i in 2:flags+1
-        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
-
+        if high_verbose
+            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            t01=time()
+            println(t01-t00,5," seconds passed")
+            t00=t01
+        end
     end
 
-    #sanity check subroutine
     if sanity_checks
+        energy(S)
         health_check(S,E0)
     end
 
@@ -45,16 +52,23 @@ function single_integration(tf,S::MF_state,flags=checkpoints)
     Rvec[1,:].=S.cl.R
     pvec[1,:].=S.cl.p
     C[1,:].=S.el.C
-    #t00=time() #uncomment for printing debug mode
+    t00=time() #uncomment for printing debug mode
+    dt_ini=dt
     for i in 2:flags+1
-        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
+        if high_verbose
+            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            t01=time()
+            println(t01-t00,5," seconds passed")
+            t00=t01
+        end
     end
 
-    #sanity check subroutine
     if sanity_checks
+        energy(S)
         health_check(S,E0)
     end
 
@@ -81,17 +95,24 @@ function single_integration(tf,S::SH_state,flags=checkpoints)
     pvec[1,:].=S.cl.p
     C[1,:].=S.el.C
     Ast[1]=S.ast
-    #t00=time() #uncomment for printing debug mode
+    dt_ini=dt
+    t00=time()
     for i in 2:flags+1
-        S,Tf[i]=rk45_bigstep(S,Tf[i-1],Tf[i],dt,dt_min,rk_tol)
+        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
         Ast[i]=S.ast
+        if high_verbose
+            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            t01=time()
+            println(t01-t00,5," seconds passed")
+            t00=t01
+        end
     end
 
-    #sanity check subroutine
     if sanity_checks
+        energy(S)
         health_check(S,E0)
     end
 
@@ -297,13 +318,13 @@ function single_distance_integration(R_min,S,tmax=walltime)
     tf=0
     ds=dt
     T=Float64[]
+    E0=energy(S)
     if time_print
         sizehint!(T,Int(round(tmax/dt)))
-        E0=energy(S)
     end
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tstep,S,ds=runge45_step(S,ds,false)
             tf+=tstep
             if time_print
                 push!(T,tstep)
@@ -311,7 +332,7 @@ function single_distance_integration(R_min,S,tmax=walltime)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,dt_min,false,eps)
+            tstep,S,ds=runge45_step(S,ds,false)
             tf+=tstep
             if time_print
                 push!(T,tstep)
