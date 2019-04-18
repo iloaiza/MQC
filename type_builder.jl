@@ -5,8 +5,7 @@ function phase_tracker(Uold,Ua)
         phase=round.(Int,Diagonal(Ua'*Uold)[diagind(Ua)])
             if  prod(abs.(phase))!=1
                 if print_phase == true
-                    println("Warning, not al phases are +-1")# at position")
-                    @show R
+                    println("Warning, not al phases are +-1")
                     println("Using sign phases instead of round. Consider changing timestep if warning is repeated many times...")
                 end
             phase=sign.(Diagonal(Ua'*Uold)[diagind(Ua)])
