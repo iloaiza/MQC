@@ -4,7 +4,8 @@ function hop!(S::FSSH_state,tstep)
   akk=abs2(S.el.C[ast])
   for i in 1:nsts
       if i != ast
-          prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,i] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
+          #prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,i] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
+          prob=2*real(S.ODE.Cdot[i,ast]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
           probs[i]=maximum([0,prob])
       end
   end
@@ -113,7 +114,8 @@ function hop!(S::CM2_FSSH_state,tstep)
               Nij=1
           end
           p_ad=S.cl.p-p_nac
-          E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
+          #E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
+          E=[S.el.E[1],sum(S.el.W[2:end,1].*(S.CM2.tnorm.^2))+S.el.E[1]]
           ΔE=norm2(p_nac)/2/mass+E[ast]-E[i] #check energy alongside NAC direction
           #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
           if ΔE>=0 #energy suficient
@@ -345,7 +347,8 @@ function hop!(S::SHEEP_state,tstep)
   for tr_st in 1:num_tr_sts
       for ast in ast_array
           if tr_st != ast
-              prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,tr_st] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[tr_st])*tstep/rho_kk
+              #prob=2*real(sum([abs(S.cl.p[a])/mass*S.el.Γ[a][ast,tr_st] for a in 1:S.cl.NDOFs])*conj(S.el.C[ast])*S.el.C[tr_st])*tstep/rho_kk
+              prob=2*real(S.ODE.Cdot[tr_st,ast]*conj(S.el.C[ast])*S.el.C[tr_st])*tstep/rho_kk
               probs[tr_st]+=maximum([0,prob])
           end
       end
