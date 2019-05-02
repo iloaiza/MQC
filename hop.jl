@@ -244,17 +244,39 @@ function hop!(S::CM2_FSSH_FRIC_state,tstep)
               Nij=1
           end
           p_ad=S.cl.p-p_nac
-          E=[S.el.E[1],sum(S.el.E[2:end].*(S.CM2.tnorm.^2))]
-          ΔE=norm2(p_nac)/2/mass+E[ast]-E[i] #check energy alongside NAC direction
-          #Eini=abs2(S.p)/2/mass+S.E[ast] #for debugging purposes (1)
+          if ast == 1
+            ΔE=real(norm2(p_nac)/2/mass-sum(S.el.E[2:end] .*(S.CM2.tnorm.^2)))
+          else
+            ΔE=real(S.extra[2]-S.el.E[1]-S.cl.mem[end])
+          end
+          #@show ΔE
           if ΔE>=0 #energy suficient
               #println("hop from $ast to $i") #for debugging
-              p_nac_new=sign.(p_nac).*Nij*sqrt(2*mass*ΔE)
-              pnew=p_nac_new+p_ad
-              S=CM2_FSSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs)
-              return S
-              #Efin=abs2(S.p)/2/mass+S.E[i] #for debugging (1)
-              #@show Eini-Efin #for debugging (1)
+              if ast == 1
+                p_nac_new=sign.(p_nac) .*Nij*sqrt(2*mass*ΔE)
+                pnew=p_nac_new+p_ad
+                stMax=2
+                tauMax=abs(S.CM2.tnorm[1])
+                for st in 2:nsts-1
+                  tauTry=abs(S.CM2.tnorm[st])
+                  if tauTry>tauMax
+                    tauMax=tauTry
+                    stMax=i+1
+                  end
+                end
+                extra=Any[stMax,S.extra[2]]
+                energy(S)
+                S=CM2_FSSH_FRIC_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,extra)
+                energy(S)
+                return S
+              else
+                pnew=p_ad+sign.(S.cl.p) .* sqrt(2*mass*ΔE)
+                energy(S)
+                extra=Any[1,S.extra[2]]
+                S=CM2_FSSH_FRIC_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,extra)
+                energy(S)
+                return S
+              end
           end
           break
       end
