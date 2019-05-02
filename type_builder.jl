@@ -1,38 +1,37 @@
 function phase_tracker(Uold,Ua)
     if Uold==0     #the first run, there is a previous state
         return false,Ua
-    else
-        phase=round.(Int,Diagonal(Ua'*Uold)[diagind(Ua)])
-            if  prod(abs.(phase))!=1
-                if print_phase == true
-                    println("Warning, not al phases are +-1")
-                    println("Using sign phases instead of round. Consider changing timestep if warning is repeated many times...")
-                end
-            phase=sign.(Diagonal(Ua'*Uold)[diagind(Ua)])
-            if prod(phase)==0
-                println("Second warning: the phase sign has a zero, resetting phase on those values")
-                for (i,p) in enumerate(phase)
-                    if p==0
-                        phase[i]=1
+    else 
+        phasechange=false
+        phase=zeros(Int,nsts)
+        for st in 1:nsts
+            if Uold[1,st]!=0
+                phase[st]=round(Int,Ua[1,st]/Uold[1,st])
+            end
+            if phase[st] != 1 && phase[st] !=-1
+                #println("First warning! Using full phase tracking with round")
+                phase[st]=round.(Int,Diagonal((Ua')*Uold)[st,st])
+                if phase[st] != 1 && phase[st] !=-1
+                    #println("Second warning! Phase not 1,-1, using sign phase")
+                    phase[st]=Int(sign(Diagonal((Ua')*Uold)[st,st]))
+                    if phase[st] != 1 && phase[st] !=-1
+                        #println("Third warning! Using symmetrized double phase")
+                        phase[st]=Int(sign(Diagonal((Ua')*Uold)[st,st]+Diagonal((Uold')*Ua)[st,st]))
+                        if phase[st] != 1 && phase[st] !=-1
+                            println("Warning! Phase not tracked for st=$st, resetting its value...")
+                            phase[st]=1
+                        end
                     end
                 end
             end
-        end
-
-        phasechange=0
-        for i in phase
-            if i==-1
-                phasechange=1
-                break
+            Ua[:,st] *= phase[st]
+            if phase[st]==-1 && !phasechange
+                phasechange=true
             end
         end
+        
 
-        if phasechange==0
-            return false,Ua
-        else
-            Ua=Ua*Diagonal(phase)
-            return true,Ua
-        end
+        return phasechange,Ua
     end
 end
 
