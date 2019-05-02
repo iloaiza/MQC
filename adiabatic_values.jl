@@ -8,7 +8,7 @@ function adiabatic_values(R,NDOFs=length(R))
     F=[zeros(nsts,nsts) for k in 1:NDOFs]
     Γ=[zeros(nsts,nsts) for k in 1:NDOFs]
     for k in 1:NDOFs
-        F[k]=Ua'*dHd[k]*Ua
+        F[k]=(Ua')*dHd[k]*Ua
         Γ[k]=-F[k]./(W+Diagonal(ones(nsts)))
         Γ[k]=Γ[k]-Diagonal(Γ[k])
     end

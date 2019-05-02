@@ -236,9 +236,7 @@ function hop!(S::CM2_FSSH_FRIC_state,tstep)
                   U[i,i]=-S.CM2.tnorm[1]
               end
 
-              Udag=U'
-
-              dij=[(Udag*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
+              dij=[((U')*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
               Nij=abs.(dij)/norm(dij)
               p_nac=S.cl.p.*Nij
           else
