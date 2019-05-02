@@ -3,40 +3,40 @@ function energy(S) #default returns false (for methods that don't track energy)
 end
 
 function energy(S::EH_state)
-    E_pot=sum(abs2.(S.el.C).*S.el.E)
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    Epot=sum(abs2.(S.el.C).*S.el.E)
+    Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return E_pot+E_kin
+    return Epot+Ekin
 end
 
 function energy(S::FSSH_state)
-    E_pot=S.el.E[S.ast]
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    Epot=S.el.E[S.ast]
+    Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return E_pot+E_kin
+    return Epot+Ekin
 end
 
 function energy(S::FSSH_dia_state)
-    E_pot=S.el.E[S.ast,S.ast]
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    Epot=S.el.E[S.ast,S.ast]
+    Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return E_pot+E_kin
+    return Epot+Ekin
 end
 
 
 function energy(S::BO_state)
-    E_pot=S.el.E[1]
-    E_kin=sum(abs2.(S.cl.p))/2/mass
+    Epot=S.el.E[1]
+    Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return E_pot+E_kin
+    return Epot+Ekin
 end
 
 function energy(S::FRIC_state)
-    E_pot=S.el.E[1]
-    E_kin=sum(abs2.(S.cl.p))/2/mass
-    E_lost=S.cl.mem[end]
+    Epot=S.el.E[1]
+    Ekin=sum(abs2.(S.cl.p))/2/mass
+    Elost=S.cl.mem[end]
 
-    return E_pot+E_kin-E_lost
+    return Epot+Ekin-Elost
 end
 
 function energy(S::SHEEP_state)
@@ -54,13 +54,40 @@ function energy(S::SHEEP_state)
 end
 
 function energy(S::CM2_state)
-    #CM2 doesn't conserve energy
+    E1=S.el.E[1]
+    E2=E1+sum(S.CM2.wvec.*(S.CM2.tnorm.^2))
+    Epot=sum(abs2.(S.el.C).*[E1,E2])
+    Ekin=sum(abs2.(S.cl.p))/2/mass
+    @show Epot, Ekin, Epot+Ekin
     return false
 end
 
 function energy(S::CM3_state)
     #CM3 doesn't conserve energy!
     return false
+end
+
+function energy(S::CM2_FSSH_state)
+    if S.ast == 1
+        Epot=S.el.E[1]
+    else
+        Epot=S.el.E[1]+sum([S.el.W[k,1]*(S.CM2.tnorm[k-1]^2) for k in 2:nsts])
+    end
+    Ekin=sum(abs2.(S.cl.p))/2/mass
+    @show Epot, Ekin, Epot+Ekin
+    return false
+end
+
+function energy(S::CM2_FSSH_FRIC_state)
+    Ekin=sum(abs2.(S.cl.p))/2/mass
+    Elost=S.cl.mem[end-1]
+    if S.ast == 1
+        Epot=S.el.E[1]
+    else
+        Epot=S.cl.mem[end]-Ekin+Elost
+    end
+    #@show Epot, Ekin, Elost, Epot+Ekin-Elost-S.cl.mem[end]
+    return Epot+Ekin-Elost
 end
 
 #sanity check subroutine
