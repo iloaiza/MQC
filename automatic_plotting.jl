@@ -136,7 +136,7 @@ if GEN_METHOD == "K_SIMULATIONS"
             if DYN in MF_LIST
                 M_string="MULTI_$(DYN)=multi_MF_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                 eval(Meta.parse(M_string))
-                for st in 1:nsts
+                for st in 1:dyn_sts
                     plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                     eval(Meta.parse(plt_string))
                 end
@@ -144,14 +144,14 @@ if GEN_METHOD == "K_SIMULATIONS"
                 if SH_eval==true
                     M_string="MULTI_$(DYN)=multi_SH_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                     eval(Meta.parse(M_string))
-                    for st in 1:nsts
+                    for st in 1:dyn_sts
                         plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                         eval(Meta.parse(plt_string))
                     end
                 else
                     M_string="MULTI_$(DYN)=multi_MF_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                     eval(Meta.parse(M_string))
-                    for st in 1:nsts
+                    for st in 1:dyn_sts
                         plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                         eval(Meta.parse(plt_string))
                     end
@@ -173,7 +173,7 @@ if GEN_METHOD == "K_SIMULATIONS"
             if DYN in MF_LIST
                 M_string="MULTI_$(DYN)=multi_MF_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                 eval(Meta.parse(M_string))
-                for st in 1:nsts
+                for st in 1:dyn_sts
                     plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                     eval(Meta.parse(plt_string))
                 end
@@ -181,14 +181,14 @@ if GEN_METHOD == "K_SIMULATIONS"
                 if SH_eval==true
                     M_string="MULTI_$(DYN)=multi_SH_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                     eval(Meta.parse(M_string))
-                    for st in 1:nsts
+                    for st in 1:dyn_sts
                         plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                         eval(Meta.parse(plt_string))
                     end
                 else
                     M_string="MULTI_$(DYN)=multi_MF_prob(K,A_$(DYN),1:$dyn_sts,cond)"
                     eval(Meta.parse(M_string))
-                    for st in 1:nsts
+                    for st in 1:dyn_sts
                         plt_string="""plot!(K,MULTI_$(DYN)[:,$st],label="$(DYN)_st=$st")"""
                         eval(Meta.parse(plt_string))
                     end

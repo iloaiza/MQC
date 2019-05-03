@@ -15,14 +15,16 @@ function single_integration(tf,S::CL_state,flags=checkpoints)
     dt_ini=dt
     t00=time()
     for i in 2:flags+1
-        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
+        S,Tf[i],dt_ini=runge_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         if high_verbose
-            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            println("Currently at R=$(S.cl.R), p=$(S.cl.p), T=$(Tf[i]), time since last check:")
             t01=time()
             println(t01-t00,5," seconds passed")
             t00=t01
+            E=energy(S)
+            println("Current energy (compared to initial energy) changed relatively by $(1-E/E0)")
         end
     end
 
@@ -43,7 +45,7 @@ function single_integration(tf,S::MF_state,flags=checkpoints)
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
-    tr_sts=length(S.el.C) #number of electronic states that will be tracked over te dynamics
+    tr_sts=length(S.el.C) #number of electronic states that will be tracked over dynamics
     C=zeros(Complex,flags+1,tr_sts)
 
     E0 = energy(S)
@@ -55,15 +57,17 @@ function single_integration(tf,S::MF_state,flags=checkpoints)
     t00=time() #uncomment for printing debug mode
     dt_ini=dt
     for i in 2:flags+1
-        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
+        S,Tf[i],dt_ini=runge_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
         if high_verbose
-            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            println("Currently at R=$(S.cl.R), p=$(S.cl.p), Cnorm=$(sum(abs2.(S.el.C))), T=$(Tf[i]), time since last check:")
             t01=time()
             println(t01-t00,5," seconds passed")
             t00=t01
+            E=energy(S)
+            println("Current energy (compared to initial energy) changed relatively by $(1-E/E0)")
         end
     end
 
@@ -98,16 +102,18 @@ function single_integration(tf,S::SH_state,flags=checkpoints)
     dt_ini=dt
     t00=time()
     for i in 2:flags+1
-        S,Tf[i],dt_ini=rk45_bigstep(S,Tf[i-1],Tf[i],dt_ini)
+        S,Tf[i],dt_ini=runge_bigstep(S,Tf[i-1],Tf[i],dt_ini)
         Rvec[i,:].=S.cl.R
         pvec[i,:].=S.cl.p
         C[i,:].=S.el.C
         Ast[i]=S.ast
         if high_verbose
-            println("Currently at R=$(S.cl.R), T=$(Tf[i]), time since last check:")
+            println("Currently at R=$(S.cl.R), p=$(S.cl.p), Cnorm=$(sum(abs2.(S.el.C))), T=$(Tf[i]), ast=$(S.ast) time since last check:")
             t01=time()
             println(t01-t00,5," seconds passed")
             t00=t01
+            E=energy(S)
+            println("Current energy (compared to initial energy) changed relatively by $(1-E/E0)")
         end
     end
 
@@ -324,7 +330,7 @@ function single_distance_integration(R_min,S,tmax=walltime)
     end
     if length(R_min)==1
         while S.cl.R-R_min<0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,false)
+            tstep,S,ds=runge_step(S,ds,false)
             tf+=tstep
             if time_print
                 push!(T,tstep)
@@ -332,7 +338,7 @@ function single_distance_integration(R_min,S,tmax=walltime)
         end
     elseif length(R_min)==2
         while S.cl.R-R_min[2]<0 && S.cl.R-R_min[1]>0 && tf<tmax
-            tstep,S,ds=runge45_step(S,ds,false)
+            tstep,S,ds=runge_step(S,ds,false)
             tf+=tstep
             if time_print
                 push!(T,tstep)
@@ -340,6 +346,10 @@ function single_distance_integration(R_min,S,tmax=walltime)
         end
     else
         error("R_min is neither a number nor an interval!")
+    end
+
+    if tf>=tmax
+        println("Warning! Trajectory ended due to walltime, still inside interaction at R=$(S.cl.R) and p=$(S.cl.p)")
     end
 
     if time_print
