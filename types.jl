@@ -46,6 +46,7 @@ struct BO_state <: CL_state
     el :: Q_state
     ODE :: ODE_state
     prefix :: String
+    extra :: Array
 end
 
 struct EH_state <: MF_state
@@ -53,6 +54,7 @@ struct EH_state <: MF_state
     el :: Q_state
     ODE :: ODE_state
     prefix :: String
+    extra :: Array
 end
 
 struct FSSH_state <: SH_state
@@ -61,6 +63,7 @@ struct FSSH_state <: SH_state
     ODE :: ODE_state
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct FSSH_dia_state <: SH_state
@@ -69,6 +72,7 @@ struct FSSH_dia_state <: SH_state
     ODE :: ODE_state
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct CM2_state <: MF_state
@@ -77,6 +81,7 @@ struct CM2_state <: MF_state
     ODE :: ODE_state
     CM2 :: CM2_extra
     prefix :: String
+    extra :: Array
 end
 
 struct CM3_state <: MF_state
@@ -85,6 +90,7 @@ struct CM3_state <: MF_state
     ODE :: ODE_state
     CM3 :: CM3_extra
     prefix :: String
+    extra :: Array
 end
 
 struct CM2_FSSH_state <: SH_state
@@ -94,6 +100,7 @@ struct CM2_FSSH_state <: SH_state
     CM2 :: CM2_extra
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct CM3_FSSH_state <: SH_state
@@ -103,6 +110,7 @@ struct CM3_FSSH_state <: SH_state
     CM3 :: CM3_extra
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct CM2_FSSH_FRIC_state <: SH_state
@@ -112,6 +120,7 @@ struct CM2_FSSH_FRIC_state <: SH_state
     CM2 :: CM2_extra
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct CM3_FSSH_FRIC_state <: SH_state
@@ -121,6 +130,7 @@ struct CM3_FSSH_FRIC_state <: SH_state
     CM3 :: CM3_extra
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 
@@ -135,6 +145,7 @@ struct SHEEP_state <: SH_state
     ODE :: ODE_state
     ast :: Int
     prefix :: String
+    extra :: Array
 end
 
 struct FRIC_state <: CL_state
@@ -142,6 +153,7 @@ struct FRIC_state <: CL_state
     el :: Q_state
     ODE :: ODE_state
     prefix :: String
+    extra :: Array
 end
 
 ###################################### TYPES META INFORMATION, UPDATE WHEN ADDING NEW METHOD! #####################
@@ -180,30 +192,30 @@ end
 
 #CREATE STATE BUILDING FUNCTIONS
 #####   CL  #####
-CL_string="function builder_CL_state(R,p,prefix,Uold=0,NDOFs=length(R),mem=0);"
+CL_string="function builder_CL_state(R,p,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
 CL_if_strings=String[]
 
 for DYN in CL_LIST
-    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,Uold,NDOFs,mem);  end;    """)
+    push!(CL_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,Uold,NDOFs,mem,extra);  end;    """)
 end
 CL_string=CL_string*prod(CL_if_strings)*"return S;  end"
 eval(Meta.parse(CL_string))
 
 #####   MF  #####
-MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R),mem=0);"
+MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
 MF_if_strings=String[]
 
 for DYN in MF_LIST
-    push!(MF_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,Uold,NDOFs,mem);  end;    """)
+    push!(MF_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,Uold,NDOFs,mem,extra);  end;    """)
 end
 MF_string=MF_string*prod(MF_if_strings)*"return S;  end"
 eval(Meta.parse(MF_string))
 ####    SH  #####
-SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R),mem=0);"
+SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
 SH_if_strings=String[]
 
 for DYN in SH_LIST
-    push!(SH_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,ast,Uold,NDOFs,mem);  end;    """)
+    push!(SH_if_strings,"""if prefix == $DYN;   S=$(DYN)_state_builder(R,p,C,ast,Uold,NDOFs,mem,extra);  end;    """)
 end
 SH_string=SH_string*prod(SH_if_strings)*"return S;  end"
 eval(Meta.parse(SH_string))

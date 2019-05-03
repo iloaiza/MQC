@@ -45,7 +45,7 @@ function Q_state_builder(C,R,Uold=0,NDOFs=length(R))
     phasechange,Ua=phase_tracker(Uold,Ua)
     if phasechange
         for i in 1:NDOFs
-            F[i]=Ua'*dHd[i]*Ua
+            F[i]=(Ua')*dHd[i]*Ua
             Γ[i]=-F[i]./(W+Diagonal(ones(nsts)))
             Γ[i]=Γ[i]-Diagonal(Γ[i])
         end
@@ -54,35 +54,40 @@ function Q_state_builder(C,R,Uold=0,NDOFs=length(R))
     return Q_state(C,E,W,F,Ua,Γ)
 end
 
-function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)
+function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,0,NDOFs)
 
     pdot=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-el.F[k][1]
+        pdot[k]=-el.F[k][1,1]
     end
     ODE=ODE_state(p/mass,pdot,0,0)
 
-    return BO_state(cl,el,ODE,"BO")
+    return BO_state(cl,el,ODE,"BO",extra)
 end
 
-function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
     Rdot=p/mass
     pdot=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-real(el.C'*el.F[k]*el.C)[1]
+        pdot[k]=-real(C'*el.F[k]*C)[1]
     end
-    Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
+    NACs=zeros(nsts,nsts)
+    for dof in 1:NDOFs
+        NACs += Rdot[dof]*el.Γ[dof]
+    end
+    Cdot=-(1im*Diagonal(el.E)+NACs)
+    #@show R,p,sum(abs2.(C))
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return EH_state(cl,el,ODE,"EH")
+    return EH_state(cl,el,ODE,"EH",extra)
 end
 
-function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
@@ -94,10 +99,10 @@ function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold rerese
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return FSSH_state(cl,el,ODE,ast,"FSSH")
+    return FSSH_state(cl,el,ODE,ast,"FSSH",extra)
 end
 
-function FSSH_dia_state_builder(R,p,C,ast=1,NDOFs=length(R),mem=0,first=false)
+function FSSH_dia_state_builder(R,p,C,ast=1,NDOFs=length(R),mem=0,extra=Any[],first=false)
     if first==true
         _,_,_,_,Ua,_=adiabatic_values(R,NDOFs)
         C=Ua'*C
@@ -119,14 +124,14 @@ function FSSH_dia_state_builder(R,p,C,ast=1,NDOFs=length(R),mem=0,first=false)
     el=Q_state_builder(C,V,0,dV,0,0)
 
     Rdot=p/mass
-    Cdot=[-1im*sum(V[k,j]*C[j] for j in 1:nsts) for k in 1:nsts]
+    Cdot=[-1im*sum([V[k,j]*C[j] for j in 1:nsts]) for k in 1:nsts]
     pdot=zeros(NDOFs)
     for k in 1:NDOFs
         pdot[k]=-dV[k][ast,ast]
     end
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return FSSH_dia_state(cl,el,ODE,ast,"FSSH_dia")
+    return FSSH_dia_state(cl,el,ODE,ast,"FSSH_dia",extra)
 end
 
 function CM2_extra(p,Γ,W,NDOFs)
@@ -141,7 +146,7 @@ function CM3_extra(p,Γ,W,NDOFs)
     return CM3_extra(z,zbar,tnorm,tnorm2,wvec,wvec2)
 end
 
-function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -153,6 +158,7 @@ function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents t
         F2[k][2,1]=F2[k][1,2]
         F2[k][1,1]=el.F[k][1,1]
         F2[k][2,2]=el.F[k][1,1]
+        #F2[k][2,2]=sum([el.F[k][st,st].*(CM2.tnorm[st-1]^2) for st in 2:nsts]) + el.F[k][1,1]
     end
 
     Weff=sum(CM2.wvec.*(CM2.tnorm.^2))
@@ -165,10 +171,10 @@ function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents t
     end
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return CM2_state(cl,el,ODE,CM2,"CM2")
+    return CM2_state(cl,el,ODE,CM2,"CM2",extra)
 end
 
-function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
@@ -197,10 +203,10 @@ function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0) #Uold reresents t
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
 
-    return CM3_state(cl,el,ODE,CM3,"CM3")
+    return CM3_state(cl,el,ODE,CM3,"CM3",extra)
 end
 
-function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -211,14 +217,18 @@ function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold re
     Rdot=p/mass
     pdot=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-el.F[k][1]
+        if ast == 1
+            pdot[k]=-el.F[k][1]
+        else
+            pdot[k]=-el.F[k][1]-sum([el.F[k][st,st].*(CM2.tnorm[st-1]^2) for st in 2:nsts])
+        end
     end
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return CM2_FSSH_state(cl,el,ODE,CM2,ast,"CM2_FSSH")
+    return CM2_FSSH_state(cl,el,ODE,CM2,ast,"CM2_FSSH",extra)
 end
 
-function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
@@ -234,10 +244,10 @@ function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold re
     end
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return CM3_FSSH_state(cl,el,ODE,CM3,ast,"CM3_FSSH")
+    return CM3_FSSH_state(cl,el,ODE,CM3,ast,"CM3_FSSH",extra)
 end
 
-function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -251,7 +261,7 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
     E_k=zeros(nsts-2)
     F_k=zeros(nsts-2)
     if mem==0 #first run, initialize ek's and fk's
-        mem=zeros(2*(nsts-2))
+        mem=zeros(2*(nsts-2)+1) # keeps 2*(nsts-2) for fric memory, end-1 for energy lost due to friction and end for total energy (invariant)
         cl=C_state_builder(R,p,NDOFs,mem)
     else
         for i in 1:nsts-2 #could be defined more simply just as zeros, but construction is shown for future reference
@@ -260,10 +270,15 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
         end
     end
 
-    TAU=CM2.tnorm.*CM2.z
+    if length(extra)==0 #first run
+        push!(extra,ast)
+        push!(extra,sum(abs2.(p))/2/mass + el.E[1])
+    end
+
+    TAU=CM2.tnorm .*CM2.z
     E_kdot=zeros(nsts-2)
     F_kdot=zeros(nsts-2)
-    memdot=zeros(2*(nsts-2))
+    memdot=zeros(2*(nsts-2)+1) # add end for tracking disipated energy due to friction
     for i in 1:nsts-2
         E_kdot[i]=TAU[i+1]*CM2.wvec[i+1]*abs2(C[2])-CM2.wvec[i+1]*F_k[i]
         F_kdot[i]=CM2.wvec[i+1]*E_k[i]
@@ -280,26 +295,38 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
     for i in 3:nsts
         U[i,i]=-CM2.tnorm[1]
     end
-    Udag=U'
 
     G=zeros(nsts,nsts,NDOFs)
     for dof in 1:NDOFs
-        G[:,:,NDOFs]=Udag*el.Γ[dof]*U
+        G[:,:,dof]=(U')*el.Γ[dof]*U
     end
 
-
+    pdot_fric=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-el.F[k][1]
+        pdot[k]=-el.F[k][1,1]
         for st in 1:nsts-2
-            pdot[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
+            #pdot[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
+            pdot_fric[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
         end
     end
+    pdot+=pdot_fric
+
+    if ast==2
+        for dof in 1:NDOFs
+            for st in 2:nsts
+                pdot[dof]+=-el.F[dof][st,st]*(CM2.tnorm[st-1]^2)
+            end
+        end
+    end
+
+    memdot[end]=sum(p .*pdot_fric)/mass #track energy lost due to friction
+
     ODE=ODE_state(Rdot,pdot,Cdot,memdot)
 
-    return CM2_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM2_FSSH_FRIC")
+    return CM2_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM2_FSSH_FRIC",extra)
 end
 
-function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
@@ -370,10 +397,10 @@ function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uo
 
     ODE=ODE_state(Rdot,pdot,Cdot,memdot)
 
-    return CM3_FSSH_FRIC_state(cl,el,ODE,CM3,ast,"CM3_FSSH_FRIC")
+    return CM3_FSSH_FRIC_state(cl,el,ODE,CM3,ast,"CM3_FSSH_FRIC",extra)
 end
 
-function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reresents the Ua value for the previous state, used for sign consistency
+function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
@@ -394,10 +421,10 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0) #Uold reres
     Cdot=-(1im*Diagonal(el.E)+sum(Rdot.*el.Γ))
     ODE=ODE_state(Rdot,pdot,Cdot,0)
 
-    return SHEEP_state(cl,el,ODE,ast,"SHEEP")
+    return SHEEP_state(cl,el,ODE,ast,"SHEEP",extra)
 end
 
-function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markovian friction with no memory!!
+function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])    #this is markovian friction with no memory!!
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,Uold,NDOFs)
 
@@ -437,7 +464,7 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0)    #this is markov
     memdot[end] = sum(p.*pdot_fric)/mass
     ODE=ODE_state(Rdot,pdot,0,memdot)
 
-    return FRIC_state(cl,el,ODE,"FRIC")
+    return FRIC_state(cl,el,ODE,"FRIC",extra)
 end
 
 ################################################################################
