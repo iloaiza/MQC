@@ -20,12 +20,11 @@ const high_verbose = false #turn true for sanity check every timestep or checkpo
 const sanity_breaks = false #true: stops when sanity check is broken, false to just display warning
 
 ## RUNGE-KUTTA OPTIONS
-### WARNING: ADAPTATIVE TIMESTEP IS CURRENTLY BROKEN, USE FIXED STEP! (RK5 is broken) (USE fixed_step=true)
 const time_print = false #true: shows the maximum, minimum, and mean timestep per trajectory in output (for adaptative timestep!)
 const fixed_step = false #true for fixing timestep, removing adaptative timestep and using dt from initial file (rk5)
 const adaptative_verbose = false #true: prints calculated errors and trial step every runge45 run (only for adaptative timestep!)
-const rk5 = false #when using fixed step, turn true to use rk5 using the coefficients from rk54
-const rk4 = true #when useing fixed step, turn true to use rk4
+const rk5 = false #when using fixed step, turn true to use rk5 using the coefficients from rk54 (uses rk4 for error control and integrates with the more exact rk5 algorithm)
+const rk4 = true #when using fixed step, turn true to use rk4
 
 
 ## WALLTIMES AND RESOLUTION OF SAVES
