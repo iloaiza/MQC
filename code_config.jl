@@ -20,9 +20,9 @@ const high_verbose = false #turn true for sanity check every timestep or checkpo
 const sanity_breaks = false #true: stops when sanity check is broken, false to just display warning
 
 ## INTEGRATION OPTIONS
-const time_print = false #true: shows the maximum, minimum, and mean timestep per trajectory in output (for adaptative timestep!)
+const time_print = false #true: shows the maximum, minimum, and mean timestep per trajectory in output (for adaptative timestep)
 const fixed_step = false #true for fixing timestep, removing adaptative timestep and using dt from initial file (rk5)
-const adaptative_verbose = false #true: prints calculated errors and trial step every runge45 run (only for adaptative timestep!)
+const adaptative_verbose = false #true: prints calculated errors and trial step every rungestep run (for adaptative timestep debugging)
 const rk5 = false #when using fixed step rk5, adaptative timestep uses Dorand-Prince 5(4)
 const rk4 = true #when using fixed step, turn true to use rk45 (uses rk5 more exact answer since it integrates better than rk4, rk4 used for error control. Yields better results)
 
@@ -34,6 +34,6 @@ FIRST_RUN = true #true to create savefile with initial energy (also creates fold
 
 ## FOR AUTOMATIC OUTPUT PLOTTING
 const plot_out = true #turn true for automatic generation of default plots
-const plot_method = "gr" #for plotting method (in Plots package)
+const plot_method = "pyplot" #for plotting method (in Plots package)
 const HISTO_RES = 150 #resolution of histograms (i.e. number of bars)
 const SH_eval = true #when doing SH statistics, chooses final adiabatic state (false for mean of electronic properties)
