@@ -26,11 +26,11 @@ function CM2_additional_values(p,Γ,W,NDOFs)
     NACs=sum(p/mass.*Γ)
     tvec=-NACs[2:end,1]
 
-    z=norm(tvec)*sign(sum(tvec))
+    z=norm(tvec)#*sign(sum(tvec))
     if z==0
         tnorm=zeros(size(tvec))
     else
-        tnorm=tvec./abs(z)
+        tnorm=tvec./z
     end
     wvec=W[2:end,1]
 
