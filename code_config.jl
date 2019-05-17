@@ -37,3 +37,4 @@ const plot_out = true #turn true for automatic generation of default plots
 const plot_method = "pyplot" #for plotting method (in Plots package)
 const HISTO_RES = 150 #resolution of histograms (i.e. number of bars)
 const SH_eval = true #when doing SH statistics, chooses final adiabatic state (false for mean of electronic properties)
+const plot_ini = false #true for plotting initial distribution in histograms for DYNAMICS simulations
