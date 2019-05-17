@@ -51,18 +51,12 @@ function CM3_additional_values(wvec,tnorm,z,NDOFs)
     wvec2=w_2.-(k_2.^2/K^2).*(w_2.-wvec[1])
     tvec2=k_2.*(w_2.-wvec[1])./K^2
 
-    tmax=maximum(tvec2)
-    tmin=minimum(tvec2)
-    if abs(tmin)>abs(tmax)
-        zbarsign=sign(tmin)
-    else
-        zbarsign=sign(tmax)
-    end
-    zbar=norm(tvec2)*zbarsign
+    zbar=norm(tvec2)
 
     if zbar==0
         tnorm2=zeros(size(tvec2))
     else
+        zbar*=sign(sum(tvec2))
         tnorm2=tvec2./zbar  #carries zbar sign! needed for equation consistency
     end
 
