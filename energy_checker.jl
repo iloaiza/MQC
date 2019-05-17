@@ -35,22 +35,19 @@ function energy(S::FRIC_state)
     Epot=S.el.E[1]
     Ekin=sum(abs2.(S.cl.p))/2/mass
     Elost=S.cl.mem[end]
-
+    #@show Elost
     return Epot+Ekin-Elost
 end
 
 function energy(S::SHEEP_state)
-    ast_array=SHEEP_REL[S.ast]
-    rho_kk=sum(abs2.(S.el.C[ast_array]))
-    Epot=[0.0]
-    for ast in ast_array
-        c2=abs2(S.el.C[ast])
-        Epot[1]+=c2*S.el.E[ast]
+    if S.ast==1
+        Epot=S.el.E[1]
+    else
+        Epot=sum(S.el.E[2:end].*abs2.(S.el.C[2:end]))/sum(abs2.(S.el.C[2:end]))
     end
-    Epot[1]=Epot[1]/rho_kk
     Ekin=sum(abs2.(S.cl.p))/2/mass
 
-    return Epot[1]+Ekin
+    return Epot+Ekin
 end
 
 function energy(S::CM2_state)
@@ -71,22 +68,33 @@ function energy(S::CM2_FSSH_state)
     if S.ast == 1
         Epot=S.el.E[1]
     else
-        Epot=S.el.E[1]+sum([S.el.W[k,1]*(S.CM2.tnorm[k-1]^2) for k in 2:nsts])
+        Epot=sum(S.el.E[2:end] .*(S.CM2.tnorm .^2))
     end
     Ekin=sum(abs2.(S.cl.p))/2/mass
-    @show Epot, Ekin, Epot+Ekin
-    return false
+    #@show Epot, Ekin, Epot+Ekin
+    return Epot+Ekin
 end
 
-function energy(S::CM2_FSSH_FRIC_state)
+function energy(S::CMFSH_state)
     Ekin=sum(abs2.(S.cl.p))/2/mass
-    Elost=S.cl.mem[end-1]
+    Elost=S.cl.mem[end]
     if S.ast == 1
         Epot=S.el.E[1]
     else
-        Epot=S.cl.mem[end]-Ekin+Elost
+        Epot=sum(S.el.E[2:end] .*S.extra)
     end
-    #@show Epot, Ekin, Elost, Epot+Ekin-Elost-S.cl.mem[end]
+    #@show Epot, Ekin, Elost
+    return Epot+Ekin-Elost
+end
+
+function energy(S::CM3_FSSH_FRIC_state)
+    #Ebar=[S.el.E[2]*(S.extra[2][k-1]^2)+S.el.E[k]*(S.extra[2][1]^2) for k in 2:nsts]
+    E2=sum(S.el.E[2:end].*S.extra)
+    E=[S.el.E[1],E2,E2]
+    Ekin=sum(abs2.(S.cl.p))/2/mass
+    Elost=S.cl.mem[end]
+    Epot=E[S.ast]
+    @show Epot, Ekin, Elost
     return Epot+Ekin-Elost
 end
 
@@ -97,7 +105,7 @@ function health_check(S,E0)
         dE = 0
     else
         E = energy(S)
-        dE = abs(E-E0)/abs(E0)
+        dE = abs(1-E/E0)
     end
     if S.prefix in MF_LIST || S.prefix in SH_LIST
         Cnorm=sum(abs2.(S.el.C))
