@@ -34,7 +34,7 @@ end
 struct CM3_extra
     z
     zbar
-    tnorm #normalized couplings vector
+    tnorm #normalized couplings vector of CM2
     tnorm2
     wvec #epsilons vector
     wvec2
@@ -113,7 +113,7 @@ struct CM3_FSSH_state <: SH_state
     extra :: Array
 end
 
-struct CM2_FSSH_FRIC_state <: SH_state
+struct CMFSH_state <: SH_state
     cl :: C_state
     el :: Q_state
     ODE :: ODE_state
@@ -127,7 +127,7 @@ struct CM3_FSSH_FRIC_state <: SH_state
     cl :: C_state
     el :: Q_state
     ODE :: ODE_state
-    CM3 :: CM3_extra
+    CM2 :: CM2_extra
     ast :: Int
     prefix :: String
     extra :: Array
@@ -162,7 +162,7 @@ end
 
 CL_LIST=["BO","FRIC"]
 MF_LIST=["EH","CM2","CM3"]
-SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP","CM2_FSSH_FRIC","CM3_FSSH_FRIC"]
+SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP","CMFSH","CM3_FSSH_FRIC"]
 
 EH_sts=nsts
 CM2_sts=2
@@ -171,8 +171,8 @@ FSSH_sts=nsts
 FSSH_dia_sts=nsts
 CM2_FSSH_sts=2
 CM3_FSSH_sts=3
-CM2_FSSH_FRIC_sts=2
-CM3_FSSH_FRIC_sts=3
+CMFSH_sts=2
+CM3_FSSH_FRIC_sts=2
 SHEEP_sts=nsts
 
 for dyn in CL_LIST
