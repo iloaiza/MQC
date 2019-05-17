@@ -1,7 +1,11 @@
 using Plots
+using Plots.PlotMeasures
 eval(Meta.parse(plot_method))
 GUIDEFONT=font(24,"Helvetica")
 TICKFONT=font(24,"Helvetica")
+L_MARG=[20mm 0mm]
+B_MARG=[15mm 0mm]
+SIZE=[1000,700]
 
 if GEN_METHOD == "DYNAMICS"
     if length(R0) == 1 #1 nuclear dimension
@@ -31,8 +35,9 @@ if GEN_METHOD == "DYNAMICS"
             end
         end
 
-        XLIMS[1]=XLIMS[1]-0.05*abs(XLIMS[1])
-        XLIMS[2]=XLIMS[2]+0.05*abs(XLIMS[2])
+        ΔX=XLIMS[2]-XLIMS[1]
+        XLIMS[1]=XLIMS[1]-0.05*ΔX
+        XLIMS[2]=XLIMS[2]+0.05*ΔX
 
         HLIMS=[1.0,-1,1] #third one holds mirror for plot clarity
         for dyn in DYN_LIST
@@ -56,17 +61,56 @@ if GEN_METHOD == "DYNAMICS"
         end
 
         dyn_1=DYN_LIST[1]
-        plot_str = """plot(Rbase_$(dyn_1)[:,1],HR_$(dyn_1)[:,1],label="$(dyn_1)_i",line=(1,:dash),color=:black)"""
+        if plot_ini
+            plot_str = """plot(Rbase_$(dyn_1)[:,1],HR_$(dyn_1)[:,1],label="$(dyn_1)_i",line=(1,:dash),color=:black,left_margin=L_MARG,bottom_margin=B_MARG,size=SIZE)"""
+        else
+            plot_str = """plot(left_margin=L_MARG,bottom_margin=B_MARG,size=SIZE)"""
+        end
         P=eval(Meta.parse(plot_str))
         for dyn in DYN_LIST
             plot_str = """plot!(Rbase_$(dyn)[:,end],HR_$(dyn)[:,end],label="$(dyn)",line=(2,:solid))"""
             eval(Meta.parse(plot_str))
         end
-        plot!(xlabel="Position (a.u.)",ylabel="Nuclear distribution",xlims=XLIMS);
-        plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT);
+        plot!(xlabel="Position (a.u.)",xlims=XLIMS)#,ylabel="Nuclear distribution");
+        plot!(xguidefont = GUIDEFONT,xtickfont=TICKFONT,yguidefont = GUIDEFONT,ytickfont=TICKFONT,legend=:best);
         #ylims!(hmin-0.1,hmax+0.1)
         savefig(P,"plots/"*potname*"R0($R0)_p0($p0).png")
         println("figure saved!")
+    elseif NDOFs==2
+        HISTO_RES=100;
+        mins=[-50;-50]
+        maxs=[50;50]
+        for dyn in DYN_LIST
+            println("Loading $dyn...")
+            if dyn in CL_LIST
+                str="""T_$(dyn),R_$(dyn),P_$(dyn)=CL_read("$filename","$dyn")"""
+            elseif dyn in MF_LIST
+                str="""T_$(dyn),R_$(dyn),P_$(dyn),C_$(dyn)=MF_read("$filename","$dyn")"""
+            elseif dyn in SH_LIST
+                str="""T_$(dyn),R_$dyn,P_$(dyn),C_$(dyn),AST_$(dyn)=SH_read("$filename","$dyn")"""
+            end
+            eval(Meta.parse(str))
+        end
+
+        println("Finished loading, starting histograms...")
+
+        for dyn in DYN_LIST
+            tic=time()
+            println("$dyn histogram...")
+            str="Rbase_$dyn,HR_$dyn=multi_d_histo(R_$dyn,$mins,$maxs,$HISTO_RES)"
+            eval(Meta.parse(str))
+            str="HR_$dyn=HR_$dyn./maximum(HR_$dyn[:,:,1])"
+            eval(Meta.parse(str))
+            println("Finished $dyn histogram after $(time()-tic) seconds!")
+        end
+
+        for dyn in DYN_LIST
+            plt_str="contour(Rbase_$(dyn)[1][:,end],Rbase_$(dyn)[2][:,end],HR_$(dyn)[:,:,end])"
+            eval(Meta.parse(plt_str))
+            xticks!([(2k+1)*pi for k in -7:7])
+            yticks!([(2k+1)*pi for k in -7:7])
+            savefig("$(filename)_$(dyn)")
+        end
     else #NDOFs != 1
         println("Still no plot implementation for multi_dimensional case")
     end
@@ -107,7 +151,7 @@ if GEN_METHOD == "K_SIMULATIONS"
         end
 
             ########### GROUND STATE PLOTTER. PLOTS FINAL GS POPULATIONS FOR DYNAMICS IN DYN_LIST
-        GS_PLOT=plot()
+        GS_PLOT=plot(left_margin=L_MARG,bottom_margin=B_MARG,size=SIZE)
         for DYN in DYN_LIST
             if DYN in MF_LIST
                 GS_string="GS_$(DYN)=GS_MF_prob(K,Fpop_$(DYN))"
@@ -130,7 +174,7 @@ if GEN_METHOD == "K_SIMULATIONS"
         #cond(R,P) is a function that gives true if R and P are within some condition of interest for the plot, otherwise false
         cond(R,P)=R[1]>0
 
-        P=plot()
+        P=plot(left_margin=L_MARG,bottom_margin=B_MARG,size=SIZE)
         for DYN in DYN_LIST
             dyn_sts=eval(Meta.parse("$(DYN)_sts"))
             if DYN in MF_LIST
@@ -167,7 +211,7 @@ if GEN_METHOD == "K_SIMULATIONS"
         #cond(R,P) is a function that gives true if R and P are within some condition of interest for the plot, otherwise false
         cond(R,P)=R[1]<0
 
-        P=plot()
+        P=plot(left_margin=L_MARG,bottom_margin=B_MARG,size=SIZE)
         for DYN in DYN_LIST
             dyn_sts=eval(Meta.parse("$(DYN)_sts"))
             if DYN in MF_LIST
