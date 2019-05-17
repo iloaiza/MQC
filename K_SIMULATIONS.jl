@@ -15,10 +15,11 @@ using Distributions #used for initial conditions distributions (such as wigner)
 
 initial_dist=false
 FIRST_RUN=true
-tmax=10000 #default maximum time, ~241 fs
 
 println("Including function modules")
 @everywhere include("Initial_data/"*input_name*".jl")
+tmax=walltime
+
 if initial_dist==false
     initial_dist=constant_dist
 end
