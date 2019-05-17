@@ -214,13 +214,24 @@ function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any
     Weff=sum(CM2.wvec.*(CM2.tnorm.^2))
     Cdot=[0 -CM2.z;CM2.z 1im*Weff]
 
+    if length(extra)==0 #first run
+        extra=[sum(abs2.(p))/2/mass + el.E[1],zeros(nsts-1)] #first entry holds initial energy, second entry holds state for jumping memory
+    end
+
     Rdot=p/mass
     pdot=zeros(NDOFs)
+
     for k in 1:NDOFs
-        if ast == 1
-            pdot[k]=-el.F[k][1]
+        if ast==1
+            pdot[k]=-el.F[k][1,1]
         else
-            pdot[k]=-el.F[k][1]-sum([el.F[k][st,st].*(CM2.tnorm[st-1]^2) for st in 2:nsts])
+            for st in 2:nsts
+                #pdot[k]+=-el.F[k][st,st]*(extra[2][st-1]^2)
+                for st2 in 2:nsts
+                    pdot[k]+=-el.F[k][st,st2]*extra[2][st-1]*extra[2][st2-1]
+                end
+                #pdot[k]+=-el.F[k][st,st]*(CM2.tnorm[st-1]^2)
+            end
         end
     end
     ODE=ODE_state(Rdot,pdot,Cdot,0)
@@ -247,7 +258,91 @@ function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any
     return CM3_FSSH_state(cl,el,ODE,CM3,ast,"CM3_FSSH",extra)
 end
 
-function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CMFSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+    cl=C_state_builder(R,p,NDOFs,mem)
+    el=Q_state_builder(C,R,Uold,NDOFs)
+    CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
+
+    Weff=sum(CM2.wvec.*(CM2.tnorm.^2))
+    Cdot=[0 -CM2.z;CM2.z 1im*Weff]
+
+    Rdot=p/mass
+    pdot=zeros(NDOFs)
+
+    E_k=zeros(nsts-2)
+    F_k=zeros(nsts-2)
+    if mem==0 #first run, initialize ek's and fk's
+        mem=zeros(2*(nsts-2)+1) # keeps 2*(nsts-2) for fric memory, end for energy lost due to friction
+        cl=C_state_builder(R,p,NDOFs,mem)
+    else
+        for i in 1:nsts-2
+            E_k[i]=mem[i]
+            F_k[i]=mem[i+nsts-2]
+        end
+    end
+
+    if length(extra)==0 #first run
+        extra=zeros(nsts-1)
+    end
+
+    U=zeros(nsts,nsts)
+    U[1,1]=1
+    for i in 1:nsts-1
+        U[2,i+1]=CM2.tnorm[i]
+        U[i+1,2]=U[2,i+1]
+    end
+    for i in 3:nsts
+        U[i,i]=-CM2.tnorm[1]
+    end
+
+    G=zeros(nsts,nsts,NDOFs)
+    for dof in 1:NDOFs
+        G[:,:,dof]=(U')*el.Γ[dof]*U
+    end
+
+    TAUtilde=zeros(nsts-2)
+    for dof in 1:NDOFs
+        TAUtilde .+= Rdot[dof]*G[2,3:end,dof]
+    end
+    Etilde=(U')*Diagonal(el.E)*U
+    Wtilde=zeros(nsts-1)
+    for st in 2:nsts
+        Wtilde[st-1]= Etilde[st,st]-Etilde[2,2]
+    end
+
+    E_kdot=zeros(nsts-2)
+    F_kdot=zeros(nsts-2)
+    memdot=zeros(2*(nsts-2)+1) # add end for tracking disipated energy due to friction
+    for i in 1:nsts-2
+        E_kdot[i]=TAUtilde[i]*Wtilde[i+1]*abs2(C[2])-Wtilde[i+1]*F_k[i]
+        F_kdot[i]=Wtilde[i+1]*E_k[i]
+        memdot[i]=E_kdot[i]
+        memdot[i+nsts-2]=F_kdot[i]
+    end
+
+    pdot_fric=zeros(NDOFs)
+    for k in 1:NDOFs
+        if ast==1
+            pdot[k]=-el.F[k][1,1]
+        else
+            for st in 2:nsts
+                pdot[k]+=-el.F[k][st,st]*extra[st-1]
+            end
+        end
+        for st in 1:nsts-2
+            pdot_fric[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
+        end
+    end
+    pdot+=pdot_fric
+
+    memdot[end]=sum(p .*pdot_fric)/mass #track energy lost due to friction
+
+    ODE=ODE_state(Rdot,pdot,Cdot,memdot)
+
+    return CMFSH_state(cl,el,ODE,CM2,ast,"CMFSH",extra)
+end
+
+function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -271,19 +366,7 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extr
     end
 
     if length(extra)==0 #first run
-        push!(extra,ast)
-        push!(extra,sum(abs2.(p))/2/mass + el.E[1])
-    end
-
-    TAU=CM2.tnorm .*CM2.z
-    E_kdot=zeros(nsts-2)
-    F_kdot=zeros(nsts-2)
-    memdot=zeros(2*(nsts-2)+1) # add end for tracking disipated energy due to friction
-    for i in 1:nsts-2
-        E_kdot[i]=TAU[i+1]*CM2.wvec[i+1]*abs2(C[2])-CM2.wvec[i+1]*F_k[i]
-        F_kdot[i]=CM2.wvec[i+1]*E_k[i]
-        memdot[i]=E_kdot[i]
-        memdot[i+nsts-2]=F_kdot[i]
+        extra=zeros(nsts-1)
     end
 
     U=zeros(nsts,nsts)
@@ -301,103 +384,52 @@ function CM2_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extr
         G[:,:,dof]=(U')*el.Γ[dof]*U
     end
 
+    #TAU=CM2.tnorm .*CM2.z
+    TAUtilde=zeros(nsts-2)
+    for dof in 1:NDOFs
+        TAUtilde .+= Rdot[dof]*G[2,3:end,dof]
+    end
+    Etilde=(U')*Diagonal(el.E)*U
+    Wtilde=zeros(nsts-1)
+    for st in 2:nsts
+        Wtilde[st-1]= Etilde[st,st]-Etilde[2,2]
+    end
+
+    E_kdot=zeros(nsts-2)
+    F_kdot=zeros(nsts-2)
+    memdot=zeros(2*(nsts-2)+1) # add end for tracking disipated energy due to friction
+    for i in 1:nsts-2
+        #E_kdot[i]=TAU[i+1]*CM2.wvec[i+1]*abs2(C[2])-CM2.wvec[i+1]*F_k[i]
+        E_kdot[i]=TAUtilde[i]*Wtilde[i+1]*abs2(C[2])-Wtilde[i+1]*F_k[i]
+        #F_kdot[i]=CM2.wvec[i+1]*E_k[i]
+        F_kdot[i]=Wtilde[i+1]*E_k[i]
+        memdot[i]=E_kdot[i]
+        memdot[i+nsts-2]=F_kdot[i]
+    end
+
     pdot_fric=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-el.F[k][1,1]
-        for st in 1:nsts-2
-            #pdot[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
-            pdot_fric[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
-        end
-    end
-    pdot+=pdot_fric
-
-    if ast==2
-        for dof in 1:NDOFs
+        if ast==1
+            pdot[k]=-el.F[k][1,1]
+        else
             for st in 2:nsts
-                pdot[dof]+=-el.F[dof][st,st]*(CM2.tnorm[st-1]^2)
+                pdot[k]+=-el.F[k][st,st]*extra[st-1]
+            end
+        end
+        for st in 1:nsts-2
+            #pdot_fric[k]+=-2*G[st+2,1,k]*E_k[st]*abs(C[2])
+            for dof2 in 1:NDOFs
+                pdot_fric[k]+=-2*G[st+2,1,k]*G[st+2,1,dof2]*abs(Wtilde[st+1])*Rdot[dof2]
             end
         end
     end
+    pdot+=pdot_fric
 
     memdot[end]=sum(p .*pdot_fric)/mass #track energy lost due to friction
 
     ODE=ODE_state(Rdot,pdot,Cdot,memdot)
 
-    return CM2_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM2_FSSH_FRIC",extra)
-end
-
-function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
-    cl=C_state_builder(R,p,NDOFs,mem)
-    el=Q_state_builder(C,R,Uold,NDOFs)
-    CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
-
-    barW=sum(CM3.wvec.*(CM3.tnorm.^2))
-    barW2=sum(CM3.wvec2.*(CM3.tnorm2.^2))
-    Cdot=[0 -CM3.z 0;CM3.z 1im*barW -1im*CM3.zbar;0 -1im*CM3.zbar 1im*barW2]
-
-    Rdot=p/mass
-    pdot=zeros(NDOFs)
-
-    E_k=zeros(nsts-3)
-    F_k=zeros(nsts-3)
-    if mem==0 #first run, initialize ek's and fk's
-        mem=zeros(2*(nsts-3))
-        cl=C_state_builder(R,p,NDOFs,mem)
-    else
-        for i in 1:nsts-3 #could be defined more simply just as zeros, but construction is shown for future reference
-            E_k[i]=mem[i]
-            F_k[i]=mem[i+nsts-3]
-        end
-    end
-
-    TAU=CM3.tnorm2.*CM3.zbar
-    E_kdot=zeros(nsts-3)
-    F_kdot=zeros(nsts-3)
-    memdot=zeros(2*(nsts-3))
-    for i in 1:nsts-3
-        E_kdot[i]=TAU[i+1]*CM3.wvec2[i+1]*abs2(C[3])-CM3.wvec[i+1]*F_k[i]
-        F_kdot[i]=CM3.wvec2[i+1]*E_k[i]
-        memdot[i]=E_kdot[i]
-        memdot[i+nsts-3]=F_kdot[i]
-    end
-
-    U2=zeros(nsts,nsts)
-    U3=zeros(nsts,nsts)
-    U2[1,1]=1
-    for i in 1:nsts-1
-        U2[2,i+1]=CM3.tnorm[i]
-        U2[i+1,2]=U2[2,i+1]
-    end
-    for i in 3:nsts
-        U2[i,i]=-CM3.tnorm[1]
-    end
-    U3[1,1]=CM3.zbar
-    U3[2,2]=1
-    for i in 1:nsts-2
-        U3[3,i+2]=CM3.tnorm2[i]
-        U3[i+2,3]=U3[3,i+2]
-    end
-    for i in 4:nsts
-        U3[i,i]=-CM3.tnorm2[1]
-    end
-    U=U2*U3
-    Udag=U'
-
-    G=zeros(nsts,nsts,NDOFs)
-    for dof in 1:NDOFs
-        G[:,:,NDOFs]=Udag*el.Γ[dof]*U
-    end
-
-    for k in 1:NDOFs
-        pdot[k]=-el.F[k][1]
-        for st in 1:nsts-3
-            pdot[k]+=-2*G[st+3,2,k]*E_k[st]*abs(C[3])
-        end
-    end
-
-    ODE=ODE_state(Rdot,pdot,Cdot,memdot)
-
-    return CM3_FSSH_FRIC_state(cl,el,ODE,CM3,ast,"CM3_FSSH_FRIC",extra)
+    return CM3_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM3_FSSH_FRIC",extra)
 end
 
 function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
@@ -406,15 +438,27 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
 
     F=zeros(NDOFs)
     pdot=zeros(NDOFs)
-    for dof in 1:NDOFs
-        avg_pop=0
-        for avg_st in SHEEP_REL[ast]
-            c2=abs2(C[avg_st])
-            avg_pop+=c2
-            F[dof]+=c2*el.F[dof][avg_st,avg_st]
+
+    if ast==1
+        for dof in 1:NDOFs
+            F[dof]=-el.F[dof][1,1]
         end
-        F[dof]=F[dof]/avg_pop
-        pdot[dof]=-F[dof]
+    else
+        rho00=abs2(C[1])
+        drho=zeros(NDOFs)
+        Ees=sum(el.E[2:end].*abs2.(C[2:end]))/(1-rho00)
+        for dof in 1:NDOFs
+            drho[dof]=2*real(conj(C[1])*sum(el.Γ[dof][1,:].*C))
+            Feh=-real(C'*el.F[dof]*C)[1] #Ehrenfest force
+            #Fcross=C[1]*sum(conj.(C).*el.F[dof][:,1])+conj(C[1])*sum(C.*el.F[dof][1,:])
+            Fgs=-el.F[dof][1,1]
+            #F[dof]=real(Feh-abs2(C[1])*Fgs)/(1-abs2(C[1]))
+            F[dof]=(Feh-rho00*Fgs+drho[dof]*(Ees-el.E[1]))/(1-rho00)
+        end
+    end
+
+    for dof in 1:NDOFs
+        pdot[dof]=F[dof]
     end
 
     Rdot=p/mass
@@ -454,7 +498,7 @@ function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])    #th
 
     pdot_fric=zeros(NDOFs)
     for k in 1:NDOFs
-        pdot[k]=-el.F[k][1]
+        pdot[k]=-el.F[k][1,1]
         for st in 1:nsts-1
             fric=-2*el.Γ[k][st+1,1]*E_k[st]
             pdot_fric[k]+=fric
