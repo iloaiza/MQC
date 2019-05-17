@@ -1,3 +1,7 @@
+using FFTW
+using SharedArrays
+using LinearAlgebra
+
 function SO_pot(potential_function,R)
     H,_=potential_function(R)
     return H
@@ -38,7 +42,7 @@ function matrix_builder(npts,X,P,pot)
                 Vmat[i,j,ipt]=V[i,j]
             end
         end
-        E,Ua=eig(V)
+        E,Ua=eigen(V)
         ind=sortperm(E)
         sort!(E)
         Ua=Ua[:,ind]
@@ -50,16 +54,16 @@ function matrix_builder(npts,X,P,pot)
     hatT=0.5/mass.*P.^2
     expT=exp.(-1im*hatT*δt/2);
 
-    expV=SharedArray{Complex128}(zeros(Complex,nsts,nsts,npts))
+    expV=SharedArray{Complex{Float64}}(zeros(Complex,nsts,nsts,npts))
     @sync @distributed for ipt in 1:npts
-        expV[:,:,ipt]=U[:,:,ipt]*diagm(exp.(-1im*hatW[:,ipt]*δt))*(U[:,:,ipt]')
+        expV[:,:,ipt]=U[:,:,ipt]*Diagonal(exp.(-1im*hatW[:,ipt]*δt))*(U[:,:,ipt]')
     end
 
     return Vmat,hatW,U,hatT,expT,expV
 end
 
 function ad_2_dia(Ψad,U,npts=length(Ψad[:,1]))
-    Ψd=zeros(Ψad)
+    Ψd=zeros(Complex{Float64},npts,nsts)
     for i in 1:npts
         Ψd[i,:]=U[:,:,i]*Ψad[i,:]
     end
@@ -67,7 +71,7 @@ function ad_2_dia(Ψad,U,npts=length(Ψad[:,1]))
 end
 
 function dia_2_ad(Ψd,U,npts=length(Ψd[:,1]))
-    Ψad=zeros(Ψd)
+    Ψad=zeros(Complex{Float64},npts,nsts)
     for i in 1:npts
         Ψad[i,:]=U[:,:,i]'*Ψd[i,:]
     end
@@ -113,7 +117,7 @@ function SO_propagation(tf,pow,xmin,xmax,R0,p0,C0,potential,flags)
     end
 
     t0=time()
-    println("Finished setup during $(round(t0-t00,4))s, starting wavefunction propagation")
+    println("Finished setup during $(t0-t00)s, starting wavefunction propagation")
 
     told=copy(t0)
     counter=2
@@ -121,8 +125,8 @@ function SO_propagation(tf,pow,xmin,xmax,R0,p0,C0,potential,flags)
         if Tf[counter]==T[tstep]
             tnew=time()
             push!(PSI_AD,dia_2_ad(Ψd,U))
-            println("Currently at $(round(tstep/nsteps,4)*100)%")
-            println("$(round(tnew-told,4))s elapsed since last % show")
+            println("Currently at $(tstep/nsteps*100)%")
+            println("$(tnew-told)s elapsed since last % show")
             told=time()
             counter+=1
         end
@@ -130,7 +134,7 @@ function SO_propagation(tf,pow,xmin,xmax,R0,p0,C0,potential,flags)
     end
     push!(PSI_AD,dia_2_ad(Ψd,U))
     tf=time()
-    println("Finished dynamics. Total propagation time was $(round(tf-t0,4)/3600) hours")
+    println("Finished dynamics. Total propagation time was $((tf-t0)/3600) hours")
 
     return Tf,X,P,PSI_AD
 end
