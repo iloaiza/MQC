@@ -96,20 +96,18 @@ function my_2D_histogram(X,Y,xrange,yrange,nx,ny)
     H=zeros(nx,ny)
     OOB_COUNT=0
 
-    for ix in 1:nx
-        for iy in 1:ny
-            x=X[ix]
-            y=Y[iy]
-            x_diff=x-xmin
-            y_diff=y-ymin
-            jx=Int(floor(x_diff/xstep))+1
-            jy=Int(floor(y_diff/ystep))+1
-            if jx<1 || jy<1 || jx>nx || jy>ny
-                #println("Error: out of bounds for x=$x, y=$y.")
-                OOB_COUNT+=1
-            else
-                H[jx,jy]+=1
-            end
+    for i in 1:length(X)
+        x=X[i]
+        y=Y[i]
+        x_diff=x-xmin
+        y_diff=y-ymin
+        jx=Int(floor(x_diff/xstep))+1
+        jy=Int(floor(y_diff/ystep))+1
+        if jx<1 || jy<1 || jx>nx || jy>ny
+            println("Error: out of bounds for x=$x, y=$y.")
+            OOB_COUNT+=1
+        else
+            H[jx,jy]+=1
         end
     end
 
@@ -188,4 +186,8 @@ end
 
 function norm2(v)
     return sum(abs2.(v))
+end
+
+function linspace(a,b,steps)
+    return range(a,stop=b,length=steps)
 end
