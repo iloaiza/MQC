@@ -192,7 +192,7 @@ end
 
 #CREATE STATE BUILDING FUNCTIONS
 #####   CL  #####
-CL_string="function builder_CL_state(R,p,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
+CL_string="function builder_CL_state(R,p,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false);"
 CL_if_strings=String[]
 
 for DYN in CL_LIST
@@ -202,7 +202,7 @@ CL_string=CL_string*prod(CL_if_strings)*"return S;  end"
 eval(Meta.parse(CL_string))
 
 #####   MF  #####
-MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
+MF_string="function builder_MF_state(R,p,C,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false);"
 MF_if_strings=String[]
 
 for DYN in MF_LIST
@@ -211,7 +211,7 @@ end
 MF_string=MF_string*prod(MF_if_strings)*"return S;  end"
 eval(Meta.parse(MF_string))
 ####    SH  #####
-SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[]);"
+SH_string="function builder_SH_state(R,p,C,ast,prefix,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false);"
 SH_if_strings=String[]
 
 for DYN in SH_LIST

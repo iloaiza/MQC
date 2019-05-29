@@ -94,6 +94,7 @@ function hop!(S::CM2_FSSH_state,tstep)
   for i in 1:2
       if ξ<probs[i] #hop successful, pass to energy check
           if S.cl.NDOFs!=1
+              error("Haven't implemented multiple nuclear degrees of freedom for diabatic FSSH")
               U=zeros(nsts,nsts)
 
               U[1,1]=1
@@ -164,6 +165,7 @@ function hop!(S::CM3_FSSH_state,tstep)
   for i in 1:3
       if ξ<probs[i] #hop successful, pass to energy check
           if S.cl.NDOFs!=1
+              error("Haven't implemented multiple nuclear degrees of freedom for diabatic FSSH")
               U2=zeros(nsts,nsts)
               U3=zeros(nsts,nsts)
 
@@ -399,7 +401,7 @@ function hop!(S::SHEEP_state,tstep)
     E=[S.el.E[1],sum(S.el.E[2:end].*abs2.(S.el.C[2:end]))/sum(abs2.(S.el.C[2:end]))]
     ΔE=norm2(p_nac)/2/mass+E[ast]-E[tst] #check energy alongside NAC direction
     if ΔE>=0 #energy suficient
-      println("hop from $ast to $tst") #for debugging
+      #println("hop from $ast to $tst") #for debugging
       pnew=p_ad+Nij*sqrt(2*mass*ΔE)
       S=SHEEP_state_builder(S.cl.R,pnew,S.el.C,tst,S.el.Ua,S.cl.NDOFs)
       return S
