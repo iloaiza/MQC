@@ -54,7 +54,7 @@ function Q_state_builder(C,R,Uold=0,NDOFs=length(R))
     return Q_state(C,E,W,F,Ua,Γ)
 end
 
-function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
+function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false)
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,0,NDOFs)
 
@@ -67,7 +67,7 @@ function BO_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
     return BO_state(cl,el,ODE,"BO",extra)
 end
 
-function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
@@ -87,7 +87,7 @@ function EH_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold 
     return EH_state(cl,el,ODE,"EH",extra)
 end
 
-function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
@@ -146,7 +146,7 @@ function CM3_extra(p,Γ,W,NDOFs)
     return CM3_extra(z,zbar,tnorm,tnorm2,wvec,wvec2)
 end
 
-function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -174,7 +174,7 @@ function CM2_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold
     return CM2_state(cl,el,ODE,CM2,"CM2",extra)
 end
 
-function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
@@ -206,7 +206,7 @@ function CM3_state_builder(R,p,C,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold
     return CM3_state(cl,el,ODE,CM3,"CM3",extra)
 end
 
-function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -239,7 +239,7 @@ function CM2_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any
     return CM2_FSSH_state(cl,el,ODE,CM2,ast,"CM2_FSSH",extra)
 end
 
-function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM3=CM3_extra(p,el.Γ,el.W,NDOFs)
@@ -258,7 +258,7 @@ function CM3_FSSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any
     return CM3_FSSH_state(cl,el,ODE,CM3,ast,"CM3_FSSH",extra)
 end
 
-function CMFSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CMFSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -271,18 +271,18 @@ function CMFSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
 
     E_k=zeros(nsts-2)
     F_k=zeros(nsts-2)
-    if mem==0 #first run, initialize ek's and fk's
+
+    if mem==0
         mem=zeros(2*(nsts-2)+1) # keeps 2*(nsts-2) for fric memory, end for energy lost due to friction
         cl=C_state_builder(R,p,NDOFs,mem)
+        if ast>2
+            ast=2
+        end
     else
         for i in 1:nsts-2
             E_k[i]=mem[i]
             F_k[i]=mem[i+nsts-2]
         end
-    end
-
-    if length(extra)==0 #first run
-        extra=zeros(nsts-1)
     end
 
     U=zeros(nsts,nsts)
@@ -342,7 +342,7 @@ function CMFSH_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
     return CMFSH_state(cl,el,ODE,CM2,ast,"CMFSH",extra)
 end
 
-function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
     CM2=CM2_extra(p,el.Γ,el.W,NDOFs)
@@ -432,7 +432,7 @@ function CM3_FSSH_FRIC_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extr
     return CM3_FSSH_FRIC_state(cl,el,ODE,CM2,ast,"CM3_FSSH_FRIC",extra)
 end
 
-function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[]) #Uold reresents the Ua value for the previous state, used for sign consistency
+function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false) #Uold reresents the Ua value for the previous state, used for sign consistency
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(C,R,Uold,NDOFs)
 
@@ -443,7 +443,8 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
         for dof in 1:NDOFs
             F[dof]=-el.F[dof][1,1]
         end
-    else
+    elseif ast>=2
+        ast=2
         rho00=abs2(C[1])
         drho=zeros(NDOFs)
         Ees=sum(el.E[2:end].*abs2.(C[2:end]))/(1-rho00)
@@ -468,7 +469,7 @@ function SHEEP_state_builder(R,p,C,ast,Uold=0,NDOFs=length(R),mem=0,extra=Any[])
     return SHEEP_state(cl,el,ODE,ast,"SHEEP",extra)
 end
 
-function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[])    #this is markovian friction with no memory!!
+function FRIC_state_builder(R,p,Uold=0,NDOFs=length(R),mem=0,extra=Any[],first=false)    #this is markovian friction with no memory!!
     cl=C_state_builder(R,p,NDOFs,mem)
     el=Q_state_builder(0,R,Uold,NDOFs)
 
@@ -513,10 +514,22 @@ end
 
 ################################################################################
 
-function CM2_initial_builder(R,p,C)
+function CM2_initial_builder(C)
+    return [C[1],sqrt(1-abs2(C[1]))],[]
+end
+function CMFSH_initial_builder(C)
     D0=[C[1],sqrt(1-abs2(C[1]))]
+    return D0,abs2.(C[2:end])
 end
 
-function CM3_initial_builder(R,p,C)
-    D0=[C[1],sqrt(1-abs2(C[1]))]
+
+function init_builder(DYN,C)
+    if eval(Meta.parse("@isdefined $(DYN)_initial_builder"))
+        return eval(Meta.parse("$(DYN)_initial_builder($C)"))
+    else
+        println("Warning, haven't defined transformation for initial electonic condition of $DYN, using [1,0,...] instead")
+        D0=zeros(eval(Meta.parse("$(DYN)_sts")))
+        D0[1]=1
+        return D0,[]
+    end
 end

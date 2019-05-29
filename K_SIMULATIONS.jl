@@ -85,7 +85,7 @@ for DYN in DYN_LIST
         eval(Meta.parse(ast_string))
         println("$DYN surface hopping dynamics will be done")
     else
-        println("$DYN was in the list and cannot be found in the list, add it in the types.jl file, by the end in the META part")
+        println("$DYN was in the list and cannot be found in the list, add it in the types.jl file, by the end in the META section")
     end
 end
 
@@ -121,7 +121,7 @@ for p0 in K
         end
         if DYN in CL_LIST
             te0=time()
-            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,0,$NDOFs,$(DYN)_mem),$tmax)"
+            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,0,$NDOFs,$(DYN)_mem,[],true),$tmax)"
             T,S=eval(Meta.parse(single_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
@@ -129,13 +129,11 @@ for p0 in K
         elseif DYN in MF_LIST
             te0=time()
             if dyn_sts!=nsts
-                println("Warning: replacing C0 for [1,0,..] for this method since implementation is not made")
-                D0=zeros(Complex,dyn_sts)
-                D0[1]=1
+                D0=init_builder(DYN,C0)
             else
                 D0=C0
             end
-            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,0,$NDOFs,$(DYN)_mem),$tmax)"
+            single_dist_string="single_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,0,$NDOFs,$(DYN)_mem,[],true),$tmax)"
             T,S=eval(Meta.parse(single_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
@@ -143,13 +141,11 @@ for p0 in K
         elseif DYN in SH_LIST
             te0=time()
             if dyn_sts!=nsts
-                println("Warning: replacing C0 for [1,0,..] for this method since implementation is not made")
-                D0=zeros(Complex,dyn_sts)
-                D0[1]=1
+                D0=init_builder(DYN,C0)
             else
                 D0=C0
             end
-            many_dist_string="many_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,$ast0,0,$NDOFs,$(DYN)_mem),$Ntrajs,$tmax)"
+            many_dist_string="many_distance_integration($R_min,$(DYN)_state_builder($R0,$p0,$D0,$ast0,0,$NDOFs,$(DYN)_mem,[],true),$Ntrajs,$tmax)"
             Ts,Rs,Ps,Cs,ASTs=eval(Meta.parse(many_dist_string))
             tef=time()
             println("FINISHED $DYN INTEGRATION FOR $(round(tef-te0,digits=3))s, SAVING...")
