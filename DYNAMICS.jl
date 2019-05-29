@@ -74,29 +74,27 @@ for DYN in DYN_LIST
     end
     if DYN in CL_LIST
         println("$DYN CLASSICAL INTEGRATION")
-        S_string="S_$(DYN)=builder_CL_state($R0,$p0,$DYN,0,$NDOFs,$(DYN)_mem)"
+        S_string="S_$(DYN)=builder_CL_state($R0,$p0,$DYN,0,$NDOFs,$(DYN)_mem,[],true)"
         eval(Meta.parse(S_string))
     elseif DYN in MF_LIST
         println("$DYN MEAN-FIELD INTEGRATION")
         if dyn_sts!=nsts
-            println("Warning! Still no implementation for $C0 initial condition for $DYN, using [1,0,...] instead")
-            D0=zeros(Complex,dyn_sts)
-            D0[1]=1
+            D0,extra0=init_builder(DYN,C0)
         else
             D0=C0
+            extra0=[]
         end
-        S_string="S_$(DYN)=builder_MF_state($R0,$p0,$D0,$DYN,0,$NDOFs,$(DYN)_mem)"
+        S_string="S_$(DYN)=builder_MF_state($R0,$p0,$D0,$DYN,0,$NDOFs,$(DYN)_mem,$extra0,true)"
         eval(Meta.parse(S_string))
     elseif DYN in SH_LIST
         println("$DYN SURFACE HOPPING INTEGRATION")
         if dyn_sts!=nsts
-            println("Warning! Still no implementation for $C0 initial condition for $DYN, using [1,0,...] instead")
-            D0=zeros(Complex,dyn_sts)
-            D0[1]=1
+            D0,extra0=init_builder(DYN,C0)
         else
             D0=C0
+            extra0=[]
         end
-        S_string="S_$(DYN)=builder_SH_state($R0,$p0,$D0,$ast0,$DYN,0,$NDOFs,$(DYN)_mem)"
+        S_string="S_$(DYN)=builder_SH_state($R0,$p0,$D0,$ast0,$DYN,0,$NDOFs,$(DYN)_mem,$extra0,true)"
         eval(Meta.parse(S_string))
     else
         println("$DYN has no implementation, check the list in types.jl in the end section of META")
@@ -129,9 +127,7 @@ for DYN in DYN_LIST
         println("BEGINNING $DYN MEAN-FIELD INTEGRATION")
         te0=time()
         if dyn_sts!=nsts
-            println("Warning! Still no implementation for $C0 initial condition for $DYN, using [1,0,...] instead")
-            D0=zeros(Complex,dyn_sts)
-            D0[1]=1
+            D0,_=init_builder(DYN,C0)
         else
             D0=C0
         end
@@ -158,13 +154,12 @@ for DYN in DYN_LIST
         println("BEGINNING $DYN SURFACE-HOPPING INTEGRATION")
         te0=time()
         if dyn_sts!=nsts
-            println("Warning! Still no implementation for $C0, using [1,0,...] instead")
-            D0=zeros(Complex,dyn_sts)
-            D0[1]=1
+            D0,extra0=init_builder(DYN,C0)
         else
             D0=C0
+            extra0=[]
         end
-        integ_string="dist_SH_integration($tf,$R0,$p0,$D0,$ast0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist)"
+        integ_string="dist_SH_integration($tf,$R0,$p0,$D0,$ast0,$(DYN)_mem,$DYN,$Ntrajs,$initial_dist,$extra0)"
         Ts,Rs,Ps,Cs,ASTs=eval(Meta.parse(integ_string))
         T=zeros(Float64,size(Ts))
         R=zeros(Float64,size(Rs))
