@@ -78,8 +78,8 @@ if GEN_METHOD == "DYNAMICS"
         println("figure saved!")
     elseif NDOFs==2
         HISTO_RES=100;
-        mins=[-50;-50]
-        maxs=[50;50]
+        mins=[-28;-28]
+        maxs=[23;23]
         for dyn in DYN_LIST
             println("Loading $dyn...")
             if dyn in CL_LIST
@@ -105,10 +105,10 @@ if GEN_METHOD == "DYNAMICS"
         end
 
         for dyn in DYN_LIST
-            plt_str="contour(Rbase_$(dyn)[1][:,end],Rbase_$(dyn)[2][:,end],HR_$(dyn)[:,:,end])"
+            plt_str="contour(round.(Int,Rbase_$(dyn)[1][:,end]./pi),round.(Int,Rbase_$(dyn)[2][:,end]./pi),HR_$(dyn)[:,:,end])"
             eval(Meta.parse(plt_str))
-            xticks!([(2k+1)*pi for k in -7:7])
-            yticks!([(2k+1)*pi for k in -7:7])
+            xticks!([(2k+1) for k in -7:7])
+            yticks!([(2k+1) for k in -7:7])
             savefig("$(filename)_$(dyn)")
         end
     else #NDOFs != 1

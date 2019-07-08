@@ -43,3 +43,21 @@ function pot_multiple_crossings(R)
 
     return H,[dH]
 end
+
+function pot_thirty_lit(R)
+    H=zeros(30,30)
+    dH=zeros(30,30)
+
+    H[1,1]=0.38*(1-exp(R-1))^2
+    dH[1,1]=-2*0.38*(1-exp(R-1))*exp(R-1)
+    for n in 2:30
+        H[n,n]=exp(-2R)+(n-2)/100
+        dH[n,n]=-2exp(-2R)
+        H[1,n]=0.05*exp(-(R-Xn[n])^2)
+        H[n,1]=H[1,n]
+        dH[1,n]=0.1*(Xn[n]-R)*exp(-(R-Xn[n])^2)
+        dH[n,1]=dH[1,n]
+    end
+
+    return H,[dH]
+end
