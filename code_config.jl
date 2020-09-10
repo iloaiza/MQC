@@ -24,17 +24,36 @@ const time_print = false #true: shows the maximum, minimum, and mean timestep pe
 const fixed_step = false #true for fixing timestep, removing adaptative timestep and using dt from initial file (rk5)
 const adaptative_verbose = false #true: prints calculated errors and trial step every rungestep run (for adaptative timestep debugging)
 const rk5 = false #when using fixed step rk5, adaptative timestep uses Dorand-Prince 5(4)
-const rk4 = true #when using fixed step, turn true to use rk45 (uses rk5 more exact answer since it integrates better than rk4, rk4 used for error control. Yields better results)
+const rk4 = true #when using fixed step, turn true to use rk45
 
 
 ## WALLTIMES AND RESOLUTION OF SAVES
 const walltime = 20000 #walltime, in a.u. (~484fs) for simulations which continue until the trajectory has left interaction zone
-const checkpoints = 100 #default number of checkpoints for DYNAMICS simulations
-FIRST_RUN = true #true to create savefile with initial energy (also creates folder for K_SIMULATIONS), false to save on top of already created files
+if @isdefined(flags)
+	const checkpoints = flags #default number of checkpoints for DYNAMICS simulations
+else
+	const checkpoints = 100 #default number of flags is 100
+end
+const FIRST_RUN = true #true to move old files and create savefile with initial energy (also creates folder for K_SIMULATIONS), false to save on top of already created files
+const IND_SAVES = true #true to save indiviually each trajectory during integration, deletes individual files when simulation complete. false for just final save
 
 ## FOR AUTOMATIC OUTPUT PLOTTING
 const plot_out = true #turn true for automatic generation of default plots
 const plot_method = "pyplot" #for plotting method (in Plots package)
 const HISTO_RES = 150 #resolution of histograms (i.e. number of bars)
+const HISTO_MINS = [-28,-28]
+const HISTO_MAXS = [23,23]
 const SH_eval = true #when doing SH statistics, chooses final adiabatic state (false for mean of electronic properties)
 const plot_ini = false #true for plotting initial distribution in histograms for DYNAMICS simulations
+const DO_DYN = true #false skips dynamics and passes to plots directly
+const BO_COMP = false #true shows mean deviation of trajectories with respect to Born-Oppenheimer dynamics
+const EL_PLOTS = false #true plots electronic populations vs time
+const EL_ES_PLOTS = false #true for plotting all electronic populations, false for just ground state
+const HISTO_PLOTS = true #true for plotting nuclear distribution histograms at each flag
+
+
+## CMFSH tolerance δf for frictional state on-the-fly detection
+const δf_CMFSH = 1.5e-4
+
+## Cleaning for removing dynamics from savefile before starting dynamical routine
+CLEAN_DYNS = String[]

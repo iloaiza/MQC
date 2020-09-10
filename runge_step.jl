@@ -183,9 +183,9 @@ function rk54_step(S0,tstep,force=false)
             println("Continuing, be wary of results (specially if warning repeats!)...")
             @show ds
             @show dt_min
-            rk45_step(S0,dt_min,true)
+            rk54_step(S0,dt_min,true)
         else
-            rk45_step(S0,ds,false)
+            rk54_step(S0,ds,false)
         end
     end
 end

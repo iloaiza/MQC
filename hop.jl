@@ -290,6 +290,144 @@ function hop!(S::CMFSH_state,tstep)
   return S
 end
 
+function hop!(S::CMFSH2_state,tstep)
+  probs=zeros(2)
+  ast=S.ast
+  akk=abs2(S.el.C[ast])
+
+  for i in 1:2
+      if i != ast
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
+          probs[i]=maximum([0,prob])
+      end
+  end
+  probs[2]+=probs[1]
+
+  ξ=rand()
+  for i in 1:2
+      if ξ<probs[i] #hop successful, pass to energy check
+          if S.cl.NDOFs!=1
+            U=zeros(nsts,nsts)
+            U[1,1]=1
+            for i in 1:nsts-1
+              U[2,i+1]=S.CM2.tnorm[i]
+              U[i+1,2]=U[2,i+1]
+            end
+            for i in 3:nsts
+              U[i,i]=-S.CM2.tnorm[1]
+            end
+            dij=[((U')*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
+            Nij=dij/norm(dij)
+            p_nac=sum(S.cl.p.*Nij)*Nij #momentum alongside NAC direction
+            p_ad=S.cl.p-p_nac #adiabatic momentum
+          else
+            p_ad=0
+            Nij=sign(S.cl.p[1])
+            p_nac=S.cl.p
+          end
+          if ast == 1
+            ΔE=real(norm2(p_nac)/2/mass+S.el.E[1]-sum(S.el.E[2:end] .*(S.CM2.tnorm.^2)))
+          else
+            ΔE=real(norm2(p_nac)/2/mass+sum(S.el.E[2:end].*S.extra)-S.el.E[1])
+            #ΔE=sum(S.el.E[2:end].*(S.CM2.tnorm.^2))+real(norm2(p_nac))/2/mass-S.el.E[1]
+          end
+          #@show ΔE
+          if ΔE>=0 #energy suficient
+            #println("hop from $ast to $i") #for debugging
+            if ast == 1
+              pnew=p_ad+Nij*sqrt(2*mass*ΔE)
+              #println("energy before hop:")
+              #energy(S)
+              S=CMFSH2_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,S.CM2.tnorm.^2)
+              #println("energy after hop:")
+              #energy(S)
+              return S
+            else
+              pnew=p_ad+Nij*sqrt(2*mass*ΔE)
+              #println("energy before hop:")
+              #energy(S)
+              S=CMFSH2_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,zeros(nsts-1))
+              #println("energy after hop:")
+              #energy(S)
+              return S
+            end
+          end
+          break
+      end
+  end
+
+  return S
+end
+
+function hop!(S::CMSH_state,tstep)
+  probs=zeros(2)
+  ast=S.ast
+  akk=abs2(S.el.C[ast])
+
+  for i in 1:2
+      if i != ast
+          prob=-2*real(S.ODE.Cdot[ast,i]*conj(S.el.C[ast])*S.el.C[i])*tstep/akk
+          probs[i]=maximum([0,prob])
+      end
+  end
+  probs[2]+=probs[1]
+
+  ξ=rand()
+  for i in 1:2
+      if ξ<probs[i] #hop successful, pass to energy check
+          if S.cl.NDOFs!=1
+            U=zeros(nsts,nsts)
+            U[1,1]=1
+            for i in 1:nsts-1
+              U[2,i+1]=S.CM2.tnorm[i]
+              U[i+1,2]=U[2,i+1]
+            end
+            for i in 3:nsts
+              U[i,i]=-S.CM2.tnorm[1]
+            end
+            dij=[((U')*S.el.Γ[dof]*U)[i,ast] for dof in 1:S.cl.NDOFs]
+            Nij=dij/norm(dij)
+            p_nac=sum(S.cl.p.*Nij)*Nij #momentum alongside NAC direction
+            p_ad=S.cl.p-p_nac #adiabatic momentum
+          else
+            p_ad=0
+            Nij=sign(S.cl.p[1])
+            p_nac=S.cl.p
+          end
+          if ast == 1
+            ΔE=real(norm2(p_nac)/2/mass+S.el.E[1]-sum(S.el.E[2:end] .*(S.CM2.tnorm.^2)))
+          else
+            ΔE=real(norm2(p_nac)/2/mass+dot(S.el.E[2:end],S.CM2.tnorm .^2)-S.el.E[1])
+            #ΔE=sum(S.el.E[2:end].*(S.CM2.tnorm.^2))+real(norm2(p_nac))/2/mass-S.el.E[1]
+          end
+          #@show ΔE
+          if ΔE>=0 #energy suficient
+            #println("hop from $ast to $i") #for debugging
+            if ast == 1
+              pnew=p_ad+Nij*sqrt(2*mass*ΔE)
+              #println("energy before hop:")
+              #energy(S)
+              S=CMSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,S.CM2.tnorm.^2)
+              #println("energy after hop:")
+              #energy(S)
+              return S
+            else
+              pnew=p_ad+Nij*sqrt(2*mass*ΔE)
+              #println("energy before hop:")
+              #energy(S)
+              S=CMSH_state_builder(S.cl.R,pnew,S.el.C,i,S.el.Ua,S.cl.NDOFs,S.cl.mem,zeros(nsts-1))
+              #println("energy after hop:")
+              #energy(S)
+              return S
+            end
+          end
+          break
+      end
+  end
+
+  return S
+end
+
 
 function hop!(S::CM3_FSSH_FRIC_state,tstep)
   probs=zeros(2)

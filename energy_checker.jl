@@ -52,11 +52,11 @@ end
 
 function energy(S::CM2_state)
     E1=S.el.E[1]
-    E2=E1+sum(S.CM2.wvec.*(S.CM2.tnorm.^2))
-    Epot=sum(abs2.(S.el.C).*[E1,E2])
+    E2=E1+dot(S.CM2.wvec,S.CM2.tnorm .^2)
+    Epot=dot(abs2.(S.el.C),[E1,E2])
     Ekin=sum(abs2.(S.cl.p))/2/mass
     @show Epot, Ekin, Epot+Ekin
-    return false
+    return Epot+Ekin
 end
 
 function energy(S::CM3_state)
@@ -77,13 +77,14 @@ end
 
 function energy(S::CMFSH_state)
     Ekin=sum(abs2.(S.cl.p))/2/mass
-    Elost=S.cl.mem[end]
+    #@show abs2.(S.cl.mem[1:2]),S.cl.mem[3:4]
     if S.ast == 1
         Epot=S.el.E[1]
     else
-        Epot=sum(S.el.E[2:end] .*S.extra)
+        Epot=dot(S.el.E[2:end],S.extra)
     end
-    #@show Epot, Ekin, Elost
+    Elost = real(S.cl.mem[end])
+    #@show Elost
     return Epot+Ekin-Elost
 end
 

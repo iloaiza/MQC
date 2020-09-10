@@ -57,6 +57,14 @@ struct EH_state <: MF_state
     extra :: Array
 end
 
+struct EH10_state <: MF_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    prefix :: String
+    extra :: Array
+end
+
 struct FSSH_state <: SH_state
     cl :: C_state
     el :: Q_state
@@ -113,7 +121,35 @@ struct CM3_FSSH_state <: SH_state
     extra :: Array
 end
 
+struct CM2FRIC_state <: MF_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    prefix :: String
+    extra :: Array
+end
+
 struct CMFSH_state <: SH_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    CM2 :: CM2_extra
+    ast :: Int
+    prefix :: String
+    extra :: Array
+end
+
+struct CMFSH2_state <: SH_state
+    cl :: C_state
+    el :: Q_state
+    ODE :: ODE_state
+    CM2 :: CM2_extra
+    ast :: Int
+    prefix :: String
+    extra :: Array
+end
+
+struct CMSH_state <: SH_state
     cl :: C_state
     el :: Q_state
     ODE :: ODE_state
@@ -161,19 +197,24 @@ end
 #ADD IN TWO POINTS: LIST, NSTS USED. CL METHODS DO NOT NEED sts (automatically constructed as 0)
 
 CL_LIST=["BO","FRIC"]
-MF_LIST=["EH","CM2","CM3"]
-SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP","CMFSH","CM3_FSSH_FRIC"]
+MF_LIST=["EH","CM2","CM3","EH10","CM2FRIC"]
+SH_LIST=["FSSH","FSSH_dia","CM2_FSSH","CM3_FSSH","SHEEP","CMFSH","CM3_FSSH_FRIC","CMSH","CMFSH2"]
 
 EH_sts=nsts
+EH10_sts = nsts
 CM2_sts=2
 CM3_sts=3
 FSSH_sts=nsts
 FSSH_dia_sts=nsts
 CM2_FSSH_sts=2
 CM3_FSSH_sts=3
+CM2FRIC_sts = 2
 CMFSH_sts=2
+CMFSH2_sts=2
+CMSH_sts=2
 CM3_FSSH_FRIC_sts=2
 SHEEP_sts=nsts
+
 
 for dyn in CL_LIST
     eval(Meta.parse("$(dyn)_sts=0"))

@@ -1,10 +1,11 @@
-function single_integration(tf,S::CL_state,flags=checkpoints)
+function single_integration(tf,S::CL_state,flags=checkpoints,savename="savefile.h5")
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
         error("There are more steps ($steps) than flags ($flags) for saving! Check your timestep, final time and number of flags...")
     end
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
+    Torig = copy(Tf)
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
     E0 = energy(S)
@@ -33,16 +34,21 @@ function single_integration(tf,S::CL_state,flags=checkpoints)
         health_check(S,E0)
     end
 
+    if IND_SAVES
+        CL_FULL_SAVE(Torig,Rvec,pvec,savename,S.prefix)
+    end
+
     return Tf,Rvec,pvec
 end
 
-function single_integration(tf,S::MF_state,flags=checkpoints)
+function single_integration(tf,S::MF_state,flags=checkpoints,savename="savefile.h5")
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
         error("There are more steps ($steps) than flags ($flags) for saving! Check your timestep, final time and number of flags...")
     end
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
+    Torig = copy(Tf)
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
     tr_sts=length(S.el.C) #number of electronic states that will be tracked over dynamics
@@ -76,16 +82,21 @@ function single_integration(tf,S::MF_state,flags=checkpoints)
         health_check(S,E0)
     end
 
+    if IND_SAVES
+        MF_FULL_SAVE(Torig,Rvec,pvec,C,savename,S.prefix)
+    end
+
     return Tf,Rvec,pvec,C
 end
 
-function single_integration(tf,S::SH_state,flags=checkpoints)
+function single_integration(tf,S::SH_state,flags=checkpoints,savename="savefile.h5")
     T=collect(0:dt:tf)
     steps=length(T)
     if steps<flags+1
         error("There are more steps ($steps) than flags ($flags) for saving! Check your timestep, final time and number of flags...")
     end
     Tf=T[Int.(round.(range(1,stop=steps,length=flags+1)))]
+    Torig = copy(Tf)
     Rvec=zeros(Float64,flags+1,S.cl.NDOFs)
     pvec=zeros(Float64,flags+1,S.cl.NDOFs)
     tr_sts=length(S.el.C) #number of electronic states to track
@@ -122,11 +133,15 @@ function single_integration(tf,S::SH_state,flags=checkpoints)
         health_check(S,E0)
     end
 
+    if IND_SAVES
+        SH_FULL_SAVE(Torig,Rvec,pvec,C,Ast,savename,S.prefix)
+    end
+
     return Tf,Rvec,pvec,C,Ast
 end
 
 
-function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=checkpoints)
+function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=checkpoints,savename="savefile.h5")
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -140,7 +155,7 @@ function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=checkpoints)
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -150,10 +165,20 @@ function wigner_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,flags=checkpoints)
             println("$(REMAINING[1]) trajectories remaining")
     end
 
-        return TF,R_VEC,P_VEC
+    println("Finished CL integration, passing to full save...")
+    CL_FULL_SAVE(TF,R_VEC,P_VEC,savename,prefix)
+
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
+
+    return TF,R_VEC,P_VEC
 end
 
-function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=checkpoints)
+function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=checkpoints,savename="savefile.h5")
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -168,7 +193,7 @@ function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=checkpoints)
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec,C=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec,C=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -179,10 +204,20 @@ function wigner_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,flags=checkpoints)
             println("$(REMAINING[1]) trajectories remaining")
     end
 
-        return TF,R_VEC,P_VEC,C_VEC
+    println("Finished MF integration, passing to full save...")
+    MF_FULL_SAVE(TF,R_VEC,P_VEC,C_VEC,savename,prefix)
+    
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
+
+    return TF,R_VEC,P_VEC,C_VEC
 end
 
-function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=checkpoints)
+function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=checkpoints,savename="savefile.h5")
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -199,7 +234,7 @@ function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=checkpoi
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec,C,Ast=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec,C,Ast=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -211,10 +246,20 @@ function wigner_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,flags=checkpoi
             println("$(REMAINING[1]) trajectories remaining")
     end
 
+    println("Finished SH integration, passing to full save...")
+    SH_FULL_SAVE(TF,R_VEC,P_VEC,C_VEC,AST_VEC,savename,prefix)
+    
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
+
         return TF,R_VEC,P_VEC,C_VEC,AST_VEC
 end
 
-function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
+function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=checkpoints,savename="savefile.h5")
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -231,7 +276,7 @@ function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -241,10 +286,20 @@ function dist_CL_integration(tf,R0,p0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
             println("$(REMAINING[1]) trajectories remaining")
     end
 
+    println("Finished CL integration, passing to full save...")
+    CL_FULL_SAVE(TF,R_VEC,P_VEC,savename,prefix)
+
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
+
         return TF,R_VEC,P_VEC
 end
 
-function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=checkpoints)
+function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=checkpoints,savename="savefile.h5")
     if DIST==constant_dist
         println("Warning: running many classical trajectories with same initial conditions, one trajectory is enough")
     end
@@ -264,7 +319,7 @@ function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=checkpoint
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec,C=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec,C=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -277,11 +332,20 @@ function dist_MF_integration(tf,R0,p0,C0,mem,prefix,Ntrajs,DIST,flags=checkpoint
     end
 
     C_VEC=C_REAL_VEC.+1im*C_IMAG_VEC
+    println("Finished MF integration, passing to full save...")
+    MF_FULL_SAVE(TF,R_VEC,P_VEC,C_VEC,savename,prefix)
+
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
 
         return TF,R_VEC,P_VEC,C_VEC
 end
 
-function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,extra=[],flags=checkpoints)
+function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,extra=[],flags=checkpoints,savename="savefile.h5")
     @everywhere NDOFs=length(R0)
     R_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
     P_VEC=SharedArray{Float64}(flags+1,NDOFs,Ntrajs)
@@ -299,7 +363,7 @@ function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,extra=[],fl
     REMAINING[1]=Ntrajs
 
     @sync @distributed for i in 1:Ntrajs
-            @time Tf,Rvec,pvec,C,Ast=single_integration(tf,S0[i],flags)
+            @time Tf,Rvec,pvec,C,Ast=single_integration(tf,S0[i],flags,savename * prefix * ".$i.h5")
             if length(TF)<length(Tf)
                 push!(TF,Tf[end])
             end
@@ -314,7 +378,17 @@ function dist_SH_integration(tf,R0,p0,C0,ast0,mem,prefix,Ntrajs,DIST,extra=[],fl
 
     C_VEC=C_REAL_VEC.+1im*C_IMAG_VEC
 
-        return TF,R_VEC,P_VEC,C_VEC,AST_VEC
+    println("Finished SH integration, passing to full save...")
+    SH_FULL_SAVE(TF,R_VEC,P_VEC,C_VEC,AST_VEC,savename,prefix)
+
+    if IND_SAVES
+        println("Removing individual saves...")
+        for i in 1:Ntrajs
+            rm(savename * prefix * ".$i.h5")
+        end
+    end
+
+    return TF,R_VEC,P_VEC,C_VEC,AST_VEC
 end
 
 
