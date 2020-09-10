@@ -10,7 +10,7 @@ Includes Ehrenfest Mean-Field (EH), Tully's Fewest Switches Surface Hopping (FSS
 Supports parallelization in shared memory (i.e. 1 node).
 
 
-	-DYNAMICS.jl is used for running dynamics and/or plotting from the resulting saved data. It must be run with an Initial_data .jl driver, the included examples reproduce the data from (3)single set of initial conditions under the MQC methods. (Still, an initial wigner distribution can be used)
+	-DYNAMICS.jl is used for running dynamics and/or plotting from the resulting saved data. It must be run with a NAME.jl file inside Initial_data folder, using "julia -p N DYNAMICS.jl NAME", with N the number of processors for parallelization (should be set to 1 if run in single processor). Check the code_config.jl file for seeing range of options that can be used. Included examples show most options being used and how to use them.
 
 	-SPLIT_OPERATOR.jl is used for the SO propagation with a driver dile in SO_Initial_data.
 
