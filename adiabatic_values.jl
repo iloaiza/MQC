@@ -23,7 +23,7 @@ function diabatic_values(R)
 end
 
 function CM2_additional_values(p,Γ,W,NDOFs)
-    NACs=sum(p/mass.*Γ)
+    NACs=sum(p/mass .* Γ)
     tvec=-NACs[2:end,1]
 
     z=norm(tvec)#*sign(sum(tvec))
